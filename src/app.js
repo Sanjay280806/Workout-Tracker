@@ -1,29 +1,13 @@
 import express from "express";
+import healthRouter from "./routes/health-routes.js";
+import exerciseRouter from "./routes/exercise-routes.js";
+import workoutRouter from "./routes/workout-routes.js"
+import logger from "./middleware/logger.js";
 const app = express();
 
-const exercises = [
-    {
-        id: 1,
-        name: "Bench Press",
-        category: "strength",
-        muscleGroup: "chest"
-    },
-    {
-        id: 2,
-        name: "Squat",
-        category: "strength",
-        muscleGroup: "legs"
-    }
-];
+app.use(express.json());
 
-app.use((req, res, next) => {
-
-    console.log(
-        `${req.method} ${req.url}`
-    );
-
-    next();
-});
+app.use(logger);
 
 app.use((req, res, next) => {
 
@@ -39,53 +23,11 @@ app.get("/" , (req, res) => {
 
 })
 
-app.get("/api/v1/health", (req, res) => {
+app.use("/api/v1/health", healthRouter);
 
-    res.status(200).json({
-        status: "OK"
-    });
+app.use("/api/v1/exercises" , exerciseRouter);
 
-});
-
-app.get("/api/v1/exercises", (req, res) => {
-
-    console.log(
-        "Request started at:",
-        req.requestStartedAt
-    );
-
-    res.status(200).json(exercises);
-
-});
-
-app.get("/api/v1/exercises/:id", (req, res) => {
-
-    const id = Number(req.params.id);
-
-    const exercise = exercises.find(
-        (exercise) => exercise.id === id
-    );
-
-    if (!exercise) {
-
-        return res.status(404).json({
-            error: "Exercise not found"
-        });
-
-    }
-
-    res.status(200).json(exercise);
-
-});
-
-app.post("/api/v1/workouts", (req, res) => {
-
-    res.status(201).json({
-        message: "Workout created"
-    });
-
-});
-
+app.use("/api/v1/workouts" , workoutRouter);
 app.use((req, res) => {
 
     res.status(404).json({
