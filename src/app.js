@@ -3,11 +3,12 @@ import healthRouter from "./routes/health-routes.js";
 import exerciseRouter from "./routes/exercise-routes.js";
 import workoutRouter from "./routes/workout-routes.js"
 import logger from "./middleware/logger.js";
+import errorHandler from "./middleware/errorHandler.js";
 const app = express();
 
-app.use(express.json());
-
 app.use(logger);
+
+app.use(express.json());
 
 app.use((req, res, next) => {
 
@@ -28,6 +29,7 @@ app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/exercises" , exerciseRouter);
 
 app.use("/api/v1/workouts" , workoutRouter);
+
 app.use((req, res) => {
 
     res.status(404).json({
@@ -35,5 +37,7 @@ app.use((req, res) => {
     });
 
 });
+
+app.use(errorHandler);
 
 export default app;

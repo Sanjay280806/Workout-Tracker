@@ -1,3 +1,4 @@
+import AppError from "../errors/AppError.js";
 import express from "express";
 const router = express.Router();
 
@@ -27,10 +28,11 @@ router.get("/:id" ,(req, res) => {
     );
 
     if (!exercise) {
-
-        return res.status(404).json({
-            error: "Exercise not found"
-        });
+        throw new AppError(
+            "Exercise not found",
+            404,
+            "EXERCISE_NOT_FOUND"
+        );
 
     }
 
