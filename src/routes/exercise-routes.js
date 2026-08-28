@@ -22,18 +22,43 @@ router.get("/" , (req, res) => {
 });
 
 router.get("/:id" ,(req, res) => {
-    const id = Number(req.params.id);
+
+    const {id} = req.params;
+
+    if (!/^\d+$/.test(id)) {
+
+        return res.status(400).json({
+            error: {
+                code: "INVALID_EXERCISE_ID",
+                message: "Exercise ID must be a positive integer"
+            }
+        });
+
+    }
+
+    const exerciseId = Number(id);
+     if (!Number.isSafeInteger(exerciseId) || exerciseId <= 0) {
+
+        return res.status(400).json({
+            error: {
+                code: "INVALID_EXERCISE_ID",
+                message: "Exercise ID must be a positive integer"
+            }
+        });
+
+    }
     const exercise = exercises.find(
-        (exercise) => exercise.id === id
+        (exercise) => exercise.id === exerciseId
     );
+    
 
     if (!exercise) {
-        throw new AppError(
-            "Exercise not found",
-            404,
-            "EXERCISE_NOT_FOUND"
-        );
-
+        return res.status(404).json({
+            error: {
+                code: "EXERCISE_NOT_FOUND",
+                message: "Exercise not found"
+            }
+        });
     }
 
     res.status(200).json(exercise);

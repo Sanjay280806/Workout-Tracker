@@ -33,7 +33,10 @@ app.use("/api/v1/workouts" , workoutRouter);
 app.use((req, res) => {
 
     res.status(404).json({
-        error: "Route not found"
+        error: {
+            code: "ROUTE_NOT_FOUND",
+            message: "Route not found"
+        }
     });
 
 });
