@@ -1,67 +1,82 @@
-import AppError from "../errors/AppError.js";
+import pool from "../db/pool.js";
 import express from "express";
 const router = express.Router();
 
-const exercises = [
-    {
-        id: 1,
-        name: "Bench Press",
-        category: "strength",
-        muscleGroup: "chest"
-    },
-    {
-        id: 2,
-        name: "Squat",
-        category: "strength",
-        muscleGroup: "legs"
-    }
-];
+router.get("/" , async(req, res, next) => {
+    try{
+        const result = await pool.query(`
+            SELECT
+                id,
+                name,
+                description,
+                category,
+                muscle_group,
+                created_at
+            FROM exercises
+            ORDER BY id;
+        `);
 
-router.get("/" , (req, res) => {
-    res.status(200).json(exercises);
+        res.status(200).json(result.rows);
+    }catch(error){
+        next(error);
+    }
 });
 
-router.get("/:id" ,(req, res) => {
+router.get("/:id" , async(req, res, next) => {
+    try{
+        const { id } = req.params;
 
-    const {id} = req.params;
+        if (!/^\d+$/.test(id)) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_EXERCISE_ID",
+                    message: "Exercise ID must be a positive integer"
+                }
+            });
+        }
 
-    if (!/^\d+$/.test(id)) {
+        const exerciseId = Number(id);
 
-        return res.status(400).json({
-            error: {
-                code: "INVALID_EXERCISE_ID",
-                message: "Exercise ID must be a positive integer"
-            }
-        });
+        if (!Number.isSafeInteger(exerciseId) ||exerciseId <= 0){
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_EXERCISE_ID",
+                    message: "Exercise ID must be a positive integer"
+                }
+            });
+        }
 
-    }
+        const result = await pool.query(`
+            SELECT
+                id,
+                name,
+                description,
+                category,
+                muscle_group,
+                created_at
+            FROM exercises
+            WHERE id = $1;
+            `,
+            [exerciseId]
+        );
 
-    const exerciseId = Number(id);
-     if (!Number.isSafeInteger(exerciseId) || exerciseId <= 0) {
-
-        return res.status(400).json({
-            error: {
-                code: "INVALID_EXERCISE_ID",
-                message: "Exercise ID must be a positive integer"
-            }
-        });
-
-    }
-    const exercise = exercises.find(
-        (exercise) => exercise.id === exerciseId
-    );
     
+    if (result.rows.length === 0) {
+            return res.status(404).json({
+                error: {
+                    code: "EXERCISE_NOT_FOUND",
+                    message: "Exercise not found"
+                }
+            });
+        }
 
-    if (!exercise) {
-        return res.status(404).json({
-            error: {
-                code: "EXERCISE_NOT_FOUND",
-                message: "Exercise not found"
-            }
-        });
+        res.status(200).json(result.rows[0]);
     }
 
-    res.status(200).json(exercise);
+     catch (error) {
+        next(error);
+    }
+
 });
 
 export default router;
