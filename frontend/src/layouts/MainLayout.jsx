@@ -11,6 +11,8 @@ function MainLayout() {
         <nav className="navbar-links">
           <Link to="/">Home</Link>
           <Link to="/dashboard">Dashboard</Link>
+          <Link to="/exercises">Exercises</Link>
+          <Link to="/workouts/create">Create Workout</Link>
           <Link to="/login">Login</Link>
         </nav>
       </header>

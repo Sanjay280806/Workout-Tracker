@@ -124,3 +124,211 @@
   color: #6b7280;
   font-size: 14px;
 }
+
+.exercises-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.page-header h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: #6b7280;
+}
+
+.exercise-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.exercise-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.exercise-card h3 {
+  margin-bottom: 6px;
+}
+
+.exercise-card p,
+.exercise-card span {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.exercise-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.exercise-controls input {
+  width: 100%;
+  padding: 12px 16px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  outline: none;
+}
+
+.exercise-controls input:focus {
+  border-color: #6b7280;
+}
+
+.muscle-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.muscle-filters button {
+  padding: 8px 16px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+
+  background: white;
+}
+
+.muscle-filters button:hover {
+  background: #f3f4f6;
+}
+
+.muscle-filters button.active {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.create-workout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.workout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 800px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+}
+
+.form-group input {
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: #6b7280;
+}
+
+.create-workout section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create-workout section h2 {
+  font-size: 20px;
+}
+
+.available-exercises {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.exercise-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+
+  padding: 16px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  text-align: left;
+}
+
+.exercise-option:hover {
+  border-color: #9ca3af;
+}
+
+.exercise-option span {
+  font-weight: 600;
+}
+
+.exercise-option small {
+  color: #6b7280;
+}
+
+.selected-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.selected-exercise {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 16px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.selected-exercise p {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.selected-exercise button {
+  padding: 8px 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  background: white;
+}
+
+.selected-exercise button:hover {
+  background: #f3f4f6;
+}
