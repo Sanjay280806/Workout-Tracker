@@ -2,20 +2,23 @@ import { Link, Outlet } from "react-router-dom";
 
 function MainLayout() {
   return (
-    <>
-      <nav>
-        <Link to="/">Workout Tracker</Link>
+    <div className="app">
+      <header className="navbar">
+        <Link className="navbar-brand" to="/">
+          Workout Tracker
+        </Link>
 
-        <div>
+        <nav className="navbar-links">
           <Link to="/">Home</Link>
+          <Link to="/dashboard">Dashboard</Link>
           <Link to="/login">Login</Link>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
-      <main>
+      <main className="main-content">
         <Outlet />
       </main>
-    </>
+    </div>
   );
 }
 
