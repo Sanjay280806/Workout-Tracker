@@ -332,3 +332,62 @@
 .selected-exercise button:hover {
   background: #f3f4f6;
 }
+
+.workout-exercise {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exercise-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.exercise-heading h3 {
+  margin-bottom: 4px;
+}
+
+.exercise-heading p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.set-row span {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.set-row input {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.add-set-button {
+  align-self: flex-start;
+  padding: 8px 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  background: white;
+}
+
+.add-set-button:hover {
+  background: #f3f4f6;
+}

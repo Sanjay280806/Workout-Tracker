@@ -18,12 +18,73 @@ function CreateWorkout() {
 
     if (alreadyAdded) return;
 
-    setSelectedExercises([...selectedExercises, exercise]);
+    const exerciseWithSet = {
+      ...exercise,
+      sets: [
+        {
+          id: 1,
+          weight: "",
+          reps: "",
+        },
+      ],
+    };
+
+    setSelectedExercises([
+      ...selectedExercises,
+      exerciseWithSet,
+    ]);
   }
 
   function removeExercise(exerciseId) {
     setSelectedExercises(
-      selectedExercises.filter((exercise) => exercise.id !== exerciseId)
+      selectedExercises.filter(
+        (exercise) => exercise.id !== exerciseId
+      )
+    );
+  }
+
+  function addSet(exerciseId) {
+    setSelectedExercises(
+      selectedExercises.map((exercise) => {
+        if (exercise.id !== exerciseId) {
+          return exercise;
+        }
+
+        const newSet = {
+          id: exercise.sets.length + 1,
+          weight: "",
+          reps: "",
+        };
+
+        return {
+          ...exercise,
+          sets: [...exercise.sets, newSet],
+        };
+      })
+    );
+  }
+
+  function updateSet(exerciseId, setId, field, value) {
+    setSelectedExercises(
+      selectedExercises.map((exercise) => {
+        if (exercise.id !== exerciseId) {
+          return exercise;
+        }
+
+        return {
+          ...exercise,
+          sets: exercise.sets.map((set) => {
+            if (set.id !== setId) {
+              return set;
+            }
+
+            return {
+              ...set,
+              [field]: value,
+            };
+          }),
+        };
+      })
     );
   }
 
@@ -31,19 +92,23 @@ function CreateWorkout() {
     <div className="create-workout">
       <div className="page-header">
         <h1>Create Workout</h1>
-        <p>Build your workout by selecting exercises.</p>
+        <p>Build your workout and configure your sets.</p>
       </div>
 
       <div className="workout-form">
         <div className="form-group">
-          <label htmlFor="workout-name">Workout name</label>
+          <label htmlFor="workout-name">
+            Workout name
+          </label>
 
           <input
             id="workout-name"
             type="text"
             placeholder="e.g. Push Day"
             value={workoutName}
-            onChange={(event) => setWorkoutName(event.target.value)}
+            onChange={(event) =>
+              setWorkoutName(event.target.value)
+            }
           />
         </div>
 
@@ -65,25 +130,75 @@ function CreateWorkout() {
         </section>
 
         <section>
-          <h2>Selected Exercises</h2>
+          <h2>Workout Exercises</h2>
 
           {selectedExercises.length === 0 ? (
             <p className="empty-state">
-              No exercises added yet.
+              Add exercises to your workout.
             </p>
           ) : (
             <div className="selected-exercises">
               {selectedExercises.map((exercise) => (
-                <div className="selected-exercise" key={exercise.id}>
-                  <div>
-                    <strong>{exercise.name}</strong>
-                    <p>{exercise.muscleGroup}</p>
+                <div
+                  className="selected-exercise workout-exercise"
+                  key={exercise.id}
+                >
+                  <div className="exercise-heading">
+                    <div>
+                      <h3>{exercise.name}</h3>
+                      <p>{exercise.muscleGroup}</p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        removeExercise(exercise.id)
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="sets">
+                    {exercise.sets.map((set, index) => (
+                      <div className="set-row" key={set.id}>
+                        <span>Set {index + 1}</span>
+
+                        <input
+                          type="number"
+                          placeholder="Weight"
+                          value={set.weight}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              set.id,
+                              "weight",
+                              event.target.value
+                            )
+                          }
+                        />
+
+                        <input
+                          type="number"
+                          placeholder="Reps"
+                          value={set.reps}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              set.id,
+                              "reps",
+                              event.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
                   </div>
 
                   <button
-                    onClick={() => removeExercise(exercise.id)}
+                    className="add-set-button"
+                    onClick={() => addSet(exercise.id)}
                   >
-                    Remove
+                    + Add Set
                   </button>
                 </div>
               ))}
