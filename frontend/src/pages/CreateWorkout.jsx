@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { createWorkout } from "../services/workoutService";
 const exercises = [
   { id: 1, name: "Bench Press", muscleGroup: "Chest" },
   { id: 2, name: "Squat", muscleGroup: "Legs" },
@@ -10,6 +10,33 @@ const exercises = [
 function CreateWorkout() {
   const [workoutName, setWorkoutName] = useState("");
   const [selectedExercises, setSelectedExercises] = useState([]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!workoutName.trim()) {
+      alert("Please enter a workout name.");
+      return;
+    }
+
+    if (selectedExercises.length === 0) {
+      alert("Please add at least one exercise.");
+      return;
+    }
+
+    const workoutData = {
+      name: workoutName.trim(),
+      exercises: selectedExercises.map((exercise) => ({
+        exerciseId: exercise.id,
+        sets: exercise.sets.map((set) => ({
+          weight: Number(set.weight),
+          reps: Number(set.reps),
+        })),
+      })),
+    };
+
+    await createWorkout(workoutData);
+  }
 
   function addExercise(exercise) {
     const alreadyAdded = selectedExercises.some(
@@ -95,7 +122,7 @@ function CreateWorkout() {
         <p>Build your workout and configure your sets.</p>
       </div>
 
-      <div className="workout-form">
+      <form className="workout-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="workout-name">
             Workout name
@@ -205,9 +232,13 @@ function CreateWorkout() {
             </div>
           )}
         </section>
-      </div>
+        <button type="submit" className="save-workout-button">
+          Save Workout
+        </button>
+      </form>
     </div>
   );
 }
 
 export default CreateWorkout;
+

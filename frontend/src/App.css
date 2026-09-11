@@ -391,3 +391,21 @@
 .add-set-button:hover {
   background: #f3f4f6;
 }
+
+.save-workout-button {
+  align-self: flex-start;
+
+  padding: 12px 20px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #111827;
+  color: white;
+
+  font-weight: 600;
+}
+
+.save-workout-button:hover {
+  opacity: 0.9;
+}
