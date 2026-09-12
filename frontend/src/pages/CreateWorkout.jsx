@@ -11,16 +11,21 @@ function CreateWorkout() {
   const [workoutName, setWorkoutName] = useState("");
   const [selectedExercises, setSelectedExercises] = useState([]);
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+
   async function handleSubmit(event) {
     event.preventDefault();
 
+    setError("");
+
     if (!workoutName.trim()) {
-      alert("Please enter a workout name.");
+      setError("Please enter a workout name.");
       return;
     }
 
     if (selectedExercises.length === 0) {
-      alert("Please add at least one exercise.");
+      setError("Please add at least one exercise.");
       return;
     }
 
@@ -35,7 +40,18 @@ function CreateWorkout() {
       })),
     };
 
-    await createWorkout(workoutData);
+    try {
+      setIsSaving(true);
+
+      await createWorkout(workoutData);
+
+      alert("Workout saved successfully!");
+    } catch (error) {
+      console.error(error);
+      setError("Unable to save workout. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function addExercise(exercise) {
@@ -232,8 +248,13 @@ function CreateWorkout() {
             </div>
           )}
         </section>
-        <button type="submit" className="save-workout-button">
-          Save Workout
+        {error && <p className="form-error">{error}</p>}
+        <button
+          type="submit"
+          className="save-workout-button"
+          disabled={isSaving}
+        >
+          {isSaving ? "Saving..." : "Save Workout"}
         </button>
       </form>
     </div>

@@ -409,3 +409,16 @@
 .save-workout-button:hover {
   opacity: 0.9;
 }
+
+.form-error {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+}
+
+.save-workout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

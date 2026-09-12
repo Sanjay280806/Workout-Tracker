@@ -1,5 +1,7 @@
-export async function createWorkout(workoutData) {
-  console.log("Workout payload:", workoutData);
+import api from "./api";
 
-  // Backend API will be connected here later.
+export async function createWorkout(workoutData) {
+  const response = await api.post("/workouts", workoutData);
+
+  return response.data;
 }
