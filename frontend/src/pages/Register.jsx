@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import FormInput from "../components/FormInput";
 
-function Login() {
+function Register() {
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
 
   function handleChange(event) {
@@ -20,16 +22,33 @@ function Login() {
   function handleSubmit(event) {
     event.preventDefault();
 
-    console.log("Login data:", formData);
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    console.log("Register data:", {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+    });
   }
 
   return (
     <div className="auth-page">
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="auth-header">
-          <h1>Welcome back</h1>
-          <p>Login to continue tracking your workouts.</p>
+          <h1>Create account</h1>
+          <p>Start tracking your workouts.</p>
         </div>
+
+        <FormInput
+          label="Name"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="Your name"
+        />
 
         <FormInput
           label="Email"
@@ -49,17 +68,26 @@ function Login() {
           placeholder="Enter password"
         />
 
+        <FormInput
+          label="Confirm password"
+          type="password"
+          name="confirmPassword"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          placeholder="Confirm password"
+        />
+
         <button type="submit" className="primary-button">
-          Login
+          Create Account
         </button>
 
         <p className="auth-footer">
-          Don't have an account?{" "}
-          <Link to="/register">Create one</Link>
+          Already have an account?{" "}
+          <Link to="/login">Login</Link>
         </p>
       </form>
     </div>
   );
 }
 
-export default Login;
+export default Register;

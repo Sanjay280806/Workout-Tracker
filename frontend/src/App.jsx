@@ -6,7 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Exercises from "./pages/Exercises";
 import CreateWorkout from "./pages/CreateWorkout";
 import MainLayout from "./layouts/MainLayout";
-
+import Register from "./pages/Register";
 function App() {
   return (
     <BrowserRouter>
@@ -14,6 +14,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/exercises" element={<Exercises />} />
           <Route
