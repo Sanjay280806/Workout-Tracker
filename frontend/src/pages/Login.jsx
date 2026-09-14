@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FormInput from "../components/FormInput";
+import { login as loginRequest } from "../services/authService";
+import { useAuth } from "../context/useAuth";
 
 function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -17,10 +25,25 @@ function Login() {
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    console.log("Login data:", formData);
+    setError("");
+
+    try {
+      setIsLoading(true);
+
+      const userData = await loginRequest(formData);
+
+      login(userData);
+
+      navigate("/dashboard");
+    } catch (error) {
+      console.error(error);
+      setError("Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -49,8 +72,14 @@ function Login() {
           placeholder="Enter password"
         />
 
-        <button type="submit" className="primary-button">
-          Login
+        {error && <p className="form-error">{error}</p>}
+
+        <button
+          type="submit"
+          className="primary-button"
+          disabled={isLoading}
+        >
+          {isLoading ? "Logging in..." : "Login"}
         </button>
 
         <p className="auth-footer">
