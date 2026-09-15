@@ -3,6 +3,7 @@ import healthRouter from "./routes/health-routes.js";
 import exerciseRouter from "./routes/exercise-routes.js";
 import workoutRouter from "./routes/workout-routes.js"
 import logger from "./middleware/logger.js";
+import authRouter from "./routes/auth-routes.js";
 import errorHandler from "./middleware/errorHandler.js";
 const app = express();
 
@@ -29,6 +30,8 @@ app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/exercises" , exerciseRouter);
 
 app.use("/api/v1/workouts" , workoutRouter);
+
+app.use("/api/v1/auth", authRouter);
 
 app.use((req, res) => {
 
