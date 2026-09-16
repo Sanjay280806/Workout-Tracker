@@ -1,14 +1,24 @@
-const errorHandler = (err, req, res, next) => {
-    console.error(err);
+export default function errorHandler(
+    error,
+    req,
+    res,
+    next
+) {
+    console.error(error);
 
-    const statusCode = err.statusCode || 500;
+    const statusCode =
+        error.statusCode || 500;
 
     res.status(statusCode).json({
         error: {
-            code: err.code || "INTERNAL_SERVER_ERROR",
-            message: err.message || "Internal Server Error"
+            code:
+                error.code ||
+                "INTERNAL_SERVER_ERROR",
+
+            message:
+                statusCode === 500
+                    ? "Internal server error"
+                    : error.message
         }
     });
-};
-
-export default errorHandler;
+}
