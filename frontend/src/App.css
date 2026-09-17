@@ -485,3 +485,15 @@
   color: #111827;
   font-weight: 600;
 }
+
+.navbar-button {
+  border: none;
+  background: none;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.navbar-button:hover {
+  color: #111827;
+}

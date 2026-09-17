@@ -1,6 +1,15 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 
 function MainLayout() {
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
   return (
     <div className="app">
       <header className="navbar">
@@ -10,10 +19,28 @@ function MainLayout() {
 
         <nav className="navbar-links">
           <Link to="/">Home</Link>
-          <Link to="/dashboard">Dashboard</Link>
-          <Link to="/exercises">Exercises</Link>
-          <Link to="/workouts/create">Create Workout</Link>
-          <Link to="/login">Login</Link>
+
+          {isAuthenticated ? (
+            <>
+              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/exercises">Exercises</Link>
+              <Link to="/workouts/create">
+                Create Workout
+              </Link>
+
+              <button
+                className="navbar-button"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Login</Link>
+              <Link to="/register">Register</Link>
+            </>
+          )}
         </nav>
       </header>
 

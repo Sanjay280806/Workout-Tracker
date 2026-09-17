@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FormInput from "../components/FormInput";
+import { register as registerRequest } from "../services/authService";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -9,6 +10,11 @@ function Register() {
     password: "",
     confirmPassword: "",
   });
+
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -19,19 +25,47 @@ function Register() {
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+    setError("");
+
+    if (!formData.name.trim()) {
+      setError("Please enter your name.");
       return;
     }
 
-    console.log("Register data:", {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-    });
+    if (!formData.email.trim()) {
+      setError("Please enter your email.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      await registerRequest({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      });
+
+      navigate("/login");
+    } catch (error) {
+      console.error(error);
+      setError("Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -77,8 +111,14 @@ function Register() {
           placeholder="Confirm password"
         />
 
-        <button type="submit" className="primary-button">
-          Create Account
+        {error && <p className="form-error">{error}</p>}
+
+        <button
+          type="submit"
+          className="primary-button"
+          disabled={isLoading}
+        >
+          {isLoading ? "Creating account..." : "Create Account"}
         </button>
 
         <p className="auth-footer">
