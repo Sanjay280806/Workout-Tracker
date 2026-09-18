@@ -1,4 +1,4 @@
-import { AppError } from "../errors/app-error.js";
+import { AppError } from "../errors/AppError.js";
 // This is a higher-order function.
 // A higher-order function is simply a function that:
 // receives a function/value and/or
