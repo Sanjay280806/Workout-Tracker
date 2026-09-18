@@ -5,6 +5,9 @@ import {
     deleteWorkout
 } from "../services/workout-service.js";
 
+import { toWorkoutDto }
+    from "../dtos/workout-dto.js";
+
 //Controller: Create Workout
 export async function createWorkoutHandler(
     req,
@@ -12,19 +15,16 @@ export async function createWorkoutHandler(
     next
 ) {
     try {
-        const {
-            name,
-            scheduledAt
-        } = req.body;
-
         const workout =
             await createWorkout({
                 userId: req.user.id,
-                name,
-                scheduledAt
+                name: req.body.name,
+                scheduledAt: req.body.scheduledAt
             });
 
-        res.status(201).json(workout);
+        res.status(201).json(
+            toWorkoutDto(workout)
+        );
 
     } catch (error) {
         next(error);
