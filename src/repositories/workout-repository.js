@@ -94,3 +94,53 @@ export async function deleteWorkoutForUser(
 
     return result.rows[0] ?? null;
 }
+
+export async function updateWorkoutForUser(
+    workoutId,
+    userId,
+    updates
+) {
+    const fields = [];
+    const values = [];
+
+    let parameterIndex = 1;
+
+    if (updates.name !== undefined) {
+        fields.push(`name = $${parameterIndex}`);
+        values.push(updates.name);
+        parameterIndex++;
+    }
+
+    if (updates.scheduledAt !== undefined) {
+        fields.push(`scheduled_at = $${parameterIndex}`);
+        values.push(updates.scheduledAt);
+        parameterIndex++;
+    }
+
+    values.push(workoutId);
+    const workoutIdParameter = parameterIndex++;
+
+    values.push(userId);
+    const userIdParameter = parameterIndex++;
+
+    const query = `
+        UPDATE workouts
+        SET ${fields.join(", ")}
+        WHERE id = $${workoutIdParameter}
+        AND user_id = $${userIdParameter}
+        RETURNING
+            id,
+            user_id,
+            name,
+            scheduled_at,
+            status,
+            created_at;
+    `;
+
+    const result = await pool.query(
+        query,
+        values
+    );
+
+    return result.rows[0] ?? null;
+}

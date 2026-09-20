@@ -6,11 +6,12 @@ import {
     createWorkoutHandler,
     getUserWorkoutsHandler,
     getWorkoutHandler,
-    deleteWorkoutHandler
+    deleteWorkoutHandler,
+    updateWorkoutHandler
 } from "../controllers/workout-controller.js";
 
 import { validate }
-    from "../middleware/validate.js";
+from "../middleware/validate.js";
 
 import {
     createWorkoutSchema
@@ -35,6 +36,13 @@ router.get(
     "/:id",
     authenticate,
     getWorkoutHandler
+);
+
+router.patch(
+    "/:id",
+    authenticate,
+    validate(updateWorkoutSchema),
+    updateWorkoutHandler
 );
 
 router.delete(

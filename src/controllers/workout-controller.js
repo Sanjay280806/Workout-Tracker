@@ -2,11 +2,12 @@ import {
     createWorkout,
     getUserWorkouts,
     getWorkout,
-    deleteWorkout
+    deleteWorkout,
+    updateWorkout
 } from "../services/workout-service.js";
 
 import { toWorkoutDto }
-    from "../dtos/workout-dto.js";
+from "../dtos/workout-dto.js";
 
 //Controller: Create Workout
 export async function createWorkoutHandler(
@@ -60,15 +61,13 @@ export async function getWorkoutHandler(
         const workoutId =
             Number(req.params.id);
 
-        if (
-            !Number.isSafeInteger(workoutId) ||
+        if (!Number.isSafeInteger(workoutId) ||
             workoutId <= 0
         ) {
             return res.status(400).json({
                 error: {
                     code: "INVALID_WORKOUT_ID",
-                    message:
-                        "Workout ID must be a positive integer"
+                    message: "Workout ID must be a positive integer"
                 }
             });
         }
@@ -96,15 +95,13 @@ export async function deleteWorkoutHandler(
         const workoutId =
             Number(req.params.id);
 
-        if (
-            !Number.isSafeInteger(workoutId) ||
+        if (!Number.isSafeInteger(workoutId) ||
             workoutId <= 0
         ) {
             return res.status(400).json({
                 error: {
                     code: "INVALID_WORKOUT_ID",
-                    message:
-                        "Workout ID must be a positive integer"
+                    message: "Workout ID must be a positive integer"
                 }
             });
         }
@@ -115,6 +112,42 @@ export async function deleteWorkoutHandler(
         );
 
         res.status(204).send();
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function updateWorkoutHandler(
+    req,
+    res,
+    next
+) {
+    try {
+        const workoutId =
+            Number(req.params.id);
+
+        if (!Number.isSafeInteger(workoutId) ||
+            workoutId <= 0
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: "INVALID_WORKOUT_ID",
+                    message: "Workout ID must be a positive integer"
+                }
+            });
+        }
+
+        const workout =
+            await updateWorkout(
+                workoutId,
+                req.user.id,
+                req.body
+            );
+
+        res.status(200).json(
+            toWorkoutDto(workout)
+        );
 
     } catch (error) {
         next(error);
