@@ -8,6 +8,8 @@ import Exercises from "./pages/Exercises";
 import CreateWorkout from "./pages/CreateWorkout";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import WorkoutList from "./pages/WorkoutList";
+import WorkoutDetails from "./pages/WorkoutDetails";
 
 import "./App.css";
 
@@ -23,9 +25,14 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/exercises" element={<Exercises />} />
+            <Route path="/workouts" element={<WorkoutList />} />
             <Route
               path="/workouts/create"
               element={<CreateWorkout />}
+            />
+            <Route
+              path="/workouts/:id"
+              element={<WorkoutDetails />}
             />
           </Route>
         </Route>

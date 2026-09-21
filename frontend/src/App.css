@@ -497,3 +497,147 @@
 .navbar-button:hover {
   color: #111827;
 }
+
+.workouts-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.workout-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.create-workout-link {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.workouts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workout-list-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.workout-list-card h2 {
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.workout-list-card p {
+  margin-bottom: 6px;
+  color: #6b7280;
+}
+
+.workout-list-card small {
+  color: #9ca3af;
+}
+
+.workout-list-card > a {
+  padding: 8px 14px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  font-size: 14px;
+}
+
+.workout-list-card > a:hover {
+  background: #f3f4f6;
+}
+
+.workout-details {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.workout-details-header h1 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 32px;
+}
+
+.workout-details-header p {
+  color: #6b7280;
+}
+
+.back-link {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.back-link:hover {
+  color: #111827;
+}
+
+.workout-details-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exercise-details-card {
+  padding: 24px;
+
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.exercise-details-header {
+  margin-bottom: 20px;
+}
+
+.exercise-details-header h2 {
+  margin-bottom: 4px;
+  font-size: 20px;
+}
+
+.exercise-details-header p {
+  color: #6b7280;
+}
+
+.sets-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sets-table-header,
+.sets-table-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  padding: 12px 16px;
+}
+
+.sets-table-header {
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.sets-table-row {
+  border-top: 1px solid #e5e7eb;
+}
+
+.sets-table-row span {
+  color: #4b5563;
+}

@@ -23,6 +23,7 @@ function MainLayout() {
           {isAuthenticated ? (
             <>
               <Link to="/dashboard">Dashboard</Link>
+              <Link to="/workouts">Workouts</Link>
               <Link to="/exercises">Exercises</Link>
               <Link to="/workouts/create">
                 Create Workout
