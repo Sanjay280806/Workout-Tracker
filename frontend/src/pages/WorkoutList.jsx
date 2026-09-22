@@ -1,30 +1,40 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const workouts = [
-  {
-    id: 1,
-    name: "Push Day",
-    duration: "45 min",
-    exerciseCount: 4,
-    date: "Sep 20, 2026",
-  },
-  {
-    id: 2,
-    name: "Pull Day",
-    duration: "52 min",
-    exerciseCount: 5,
-    date: "Sep 18, 2026",
-  },
-  {
-    id: 3,
-    name: "Leg Day",
-    duration: "60 min",
-    exerciseCount: 5,
-    date: "Sep 16, 2026",
-  },
-];
+import { getWorkouts } from "../services/workoutService";
 
 function WorkoutList() {
+  const [workouts, setWorkouts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadWorkouts() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const data = await getWorkouts();
+
+        setWorkouts(data);
+      } catch (error) {
+        console.error(error);
+        setError("Unable to load workouts.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadWorkouts();
+  }, []);
+
+  if (isLoading) {
+    return <p>Loading workouts...</p>;
+  }
+
+  if (error) {
+    return <p className="form-error">{error}</p>;
+  }
+
   return (
     <div className="workouts-page">
       <div className="page-header workout-page-header">
@@ -41,26 +51,40 @@ function WorkoutList() {
         </Link>
       </div>
 
-      <div className="workouts-list">
-        {workouts.map((workout) => (
-          <article className="workout-list-card" key={workout.id}>
-            <div>
-              <h2>{workout.name}</h2>
+      {workouts.length === 0 ? (
+        <div className="empty-state">
+          <h2>No workouts yet</h2>
+          <p>Create your first workout to get started.</p>
 
-              <p>
-                {workout.exerciseCount} exercises ·{" "}
-                {workout.duration}
-              </p>
+          <Link to="/workouts/create">
+            Create Workout
+          </Link>
+        </div>
+      ) : (
+        <div className="workouts-list">
+          {workouts.map((workout) => (
+            <article
+              className="workout-list-card"
+              key={workout.id}
+            >
+              <div>
+                <h2>{workout.name}</h2>
 
-              <small>{workout.date}</small>
-            </div>
+                <p>
+                  {workout.exerciseCount} exercises ·{" "}
+                  {workout.duration}
+                </p>
 
-            <Link to={`/workouts/${workout.id}`}>
-              View
-            </Link>
-          </article>
-        ))}
-      </div>
+                <small>{workout.date}</small>
+              </div>
+
+              <Link to={`/workouts/${workout.id}`}>
+                View
+              </Link>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

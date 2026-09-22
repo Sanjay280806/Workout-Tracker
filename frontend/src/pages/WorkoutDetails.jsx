@@ -1,63 +1,86 @@
-import { Link, useParams } from "react-router-dom";
-
-const workouts = [
-  {
-    id: 1,
-    name: "Push Day",
-    date: "Sep 20, 2026",
-    duration: "45 min",
-    exercises: [
-      {
-        id: 1,
-        name: "Bench Press",
-        muscleGroup: "Chest",
-        sets: [
-          { id: 1, weight: 80, reps: 10 },
-          { id: 2, weight: 80, reps: 8 },
-          { id: 3, weight: 75, reps: 10 },
-        ],
-      },
-      {
-        id: 2,
-        name: "Shoulder Press",
-        muscleGroup: "Shoulders",
-        sets: [
-          { id: 1, weight: 20, reps: 10 },
-          { id: 2, weight: 20, reps: 8 },
-        ],
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Pull Day",
-    date: "Sep 18, 2026",
-    duration: "52 min",
-    exercises: [
-      {
-        id: 1,
-        name: "Pull Up",
-        muscleGroup: "Back",
-        sets: [
-          { id: 1, weight: 0, reps: 10 },
-          { id: 2, weight: 0, reps: 8 },
-        ],
-      },
-    ],
-  },
-];
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  getWorkout,
+  deleteWorkout,
+} from "../services/workoutService";
 
 function WorkoutDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
-  const workout = workouts.find(
-    (item) => item.id === Number(id)
-  );
+  const [workout, setWorkout] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  useEffect(() => {
+    async function loadWorkout() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const data = await getWorkout(id);
+
+        setWorkout(data);
+      } catch (error) {
+        console.error(error);
+        setError("Unable to load this workout.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadWorkout();
+  }, [id]);
+
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this workout?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      await deleteWorkout(id);
+
+      navigate("/workouts");
+    } catch (error) {
+      console.error(error);
+      setDeleteError("Unable to delete this workout.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  if (isLoading) {
+    return <p>Loading workout...</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="empty-state">
+        <h2>Unable to load workout</h2>
+        <p>{error}</p>
+
+        <Link to="/workouts">
+          Back to workouts
+        </Link>
+      </div>
+    );
+  }
 
   if (!workout) {
     return (
       <div className="empty-state">
-        <h1>Workout not found</h1>
+        <h2>Workout not found</h2>
 
         <Link to="/workouts">
           Back to workouts
@@ -68,9 +91,15 @@ function WorkoutDetails() {
 
   return (
     <div className="workout-details">
+
+      {/* Header */}
       <div className="workout-details-header">
+
         <div>
-          <Link to="/workouts" className="back-link">
+          <Link
+            to="/workouts"
+            className="back-link"
+          >
             ← Back to workouts
           </Link>
 
@@ -80,22 +109,50 @@ function WorkoutDetails() {
             {workout.date} · {workout.duration}
           </p>
         </div>
+
+        <button
+          className="delete-button"
+          onClick={handleDelete}
+          disabled={isDeleting}
+        >
+          {isDeleting
+            ? "Deleting..."
+            : "Delete Workout"}
+        </button>
+
       </div>
 
+      {/* Delete error */}
+      {deleteError && (
+        <p className="form-error">
+          {deleteError}
+        </p>
+      )}
+
+      {/* Exercises */}
       <div className="workout-details-exercises">
+
         {workout.exercises.map((exercise) => (
           <section
             className="exercise-details-card"
             key={exercise.id}
           >
+
             <div className="exercise-details-header">
+
               <div>
                 <h2>{exercise.name}</h2>
-                <p>{exercise.muscleGroup}</p>
+
+                <p>
+                  {exercise.muscleGroup}
+                </p>
               </div>
+
             </div>
 
+            {/* Sets */}
             <div className="sets-table">
+
               <div className="sets-table-header">
                 <span>Set</span>
                 <span>Weight</span>
@@ -103,16 +160,29 @@ function WorkoutDetails() {
               </div>
 
               {exercise.sets.map((set, index) => (
-                <div className="sets-table-row" key={set.id}>
+                <div
+                  className="sets-table-row"
+                  key={set.id}
+                >
                   <span>{index + 1}</span>
-                  <span>{set.weight} kg</span>
-                  <span>{set.reps}</span>
+
+                  <span>
+                    {set.weight} kg
+                  </span>
+
+                  <span>
+                    {set.reps}
+                  </span>
                 </div>
               ))}
+
             </div>
+
           </section>
         ))}
+
       </div>
+
     </div>
   );
 }

@@ -578,6 +578,13 @@
   color: #6b7280;
 }
 
+.workout-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
 .back-link {
   color: #6b7280;
   font-size: 14px;
@@ -640,4 +647,49 @@
 
 .sets-table-row span {
   color: #4b5563;
+}
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+
+  background: white;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+}
+
+.empty-state h2 {
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  margin-bottom: 16px;
+  color: #6b7280;
+}
+
+.empty-state a {
+  font-weight: 600;
+}
+
+.delete-button {
+  align-self: flex-start;
+
+  padding: 10px 16px;
+
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+
+  background: white;
+  color: #dc2626;
+
+  font-weight: 600;
+}
+
+.delete-button:hover {
+  background: #fef2f2;
+}
+
+.delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
