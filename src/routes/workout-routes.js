@@ -14,7 +14,8 @@ import { validate }
 from "../middleware/validate.js";
 
 import {
-    createWorkoutSchema
+    createWorkoutSchema,
+    updateWorkoutSchema
 } from "../schemas/workout-schema.js";
 
 const router = express.Router();
