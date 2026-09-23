@@ -110,15 +110,26 @@ function WorkoutDetails() {
           </p>
         </div>
 
-        <button
-          className="delete-button"
-          onClick={handleDelete}
-          disabled={isDeleting}
-        >
-          {isDeleting
-            ? "Deleting..."
-            : "Delete Workout"}
-        </button>
+        <div className="workout-actions">
+
+          <Link
+            to={`/workouts/${id}/edit`}
+            className="primary-button"
+          >
+            Edit Workout
+          </Link>
+
+          <button
+            className="delete-button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting
+              ? "Deleting..."
+              : "Delete Workout"}
+          </button>
+
+        </div>
 
       </div>
 

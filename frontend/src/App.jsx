@@ -10,6 +10,7 @@ import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import WorkoutList from "./pages/WorkoutList";
 import WorkoutDetails from "./pages/WorkoutDetails";
+import EditWorkout from "./pages/EditWorkout";
 
 import "./App.css";
 
@@ -33,6 +34,10 @@ function App() {
             <Route
               path="/workouts/:id"
               element={<WorkoutDetails />}
+            />
+            <Route
+              path="/workouts/:id/edit"
+              element={<EditWorkout />}
             />
           </Route>
         </Route>
