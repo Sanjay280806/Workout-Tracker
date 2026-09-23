@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import healthRouter from "./routes/health-routes.js";
 import exerciseRouter from "./routes/exercise-routes.js";
 import workoutRouter from "./routes/workout-routes.js"
@@ -6,6 +7,11 @@ import logger from "./middleware/logger.js";
 import authRouter from "./routes/auth-routes.js";
 import errorHandler from "./middleware/errorHandler.js";
 const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:5174",
+  })
+);
 
 app.use(logger);
 
