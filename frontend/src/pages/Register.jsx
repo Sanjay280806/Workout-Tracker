@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FormInput from "../components/FormInput";
 import { register as registerRequest } from "../services/authService";
+import getApiError from "../utils/getApiError";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -41,11 +42,16 @@ function Register() {
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError(
+        "Password must be at least 6 characters."
+      );
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (
+      formData.password !==
+      formData.confirmPassword
+    ) {
       setError("Passwords do not match.");
       return;
     }
@@ -62,7 +68,13 @@ function Register() {
       navigate("/login");
     } catch (error) {
       console.error(error);
-      setError("Registration failed. Please try again.");
+
+      setError(
+        getApiError(
+          error,
+          "Registration failed. Please try again."
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -70,10 +82,16 @@ function Register() {
 
   return (
     <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
+      <form
+        className="auth-card"
+        onSubmit={handleSubmit}
+      >
         <div className="auth-header">
           <h1>Create account</h1>
-          <p>Start tracking your workouts.</p>
+
+          <p>
+            Start tracking your workouts.
+          </p>
         </div>
 
         <FormInput
@@ -111,23 +129,31 @@ function Register() {
           placeholder="Confirm password"
         />
 
-        {error && <p className="form-error">{error}</p>}
+        {error && (
+          <p className="form-error">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
           className="primary-button"
           disabled={isLoading}
         >
-          {isLoading ? "Creating account..." : "Create Account"}
+          {isLoading
+            ? "Creating account..."
+            : "Create Account"}
         </button>
 
         <p className="auth-footer">
           Already have an account?{" "}
-          <Link to="/login">Login</Link>
+          <Link to="/login">
+            Login
+          </Link>
         </p>
       </form>
     </div>
   );
 }
 
-export default Register;
+export default Register;  
