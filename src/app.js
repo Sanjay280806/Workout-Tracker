@@ -31,13 +31,13 @@ app.get("/" , (req, res) => {
 
 })
 
+app.use("/api/v1/auth", authRouter);
+
 app.use("/api/v1/health", healthRouter);
 
 app.use("/api/v1/exercises" , exerciseRouter);
 
 app.use("/api/v1/workouts" , workoutRouter);
-
-app.use("/api/v1/auth", authRouter);
 
 app.use((req, res) => {
 
