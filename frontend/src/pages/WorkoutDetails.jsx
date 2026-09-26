@@ -1,25 +1,52 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+
 import {
   getWorkout,
   deleteWorkout,
 } from "../services/workoutService";
+
+import getApiError from "../utils/getApiError";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorMessage from "../components/ErrorMessage";
 
 function WorkoutDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [workout, setWorkout] = useState(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  async function loadWorkout() {
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const data = await getWorkout(id);
+
+      setWorkout(data);
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        getApiError(
+          error,
+          "Unable to load this workout."
+        )
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   useEffect(() => {
-    async function loadWorkout() {
+    async function fetchWorkout() {
       try {
-        setIsLoading(true);
         setError("");
 
         const data = await getWorkout(id);
@@ -27,13 +54,19 @@ function WorkoutDetails() {
         setWorkout(data);
       } catch (error) {
         console.error(error);
-        setError("Unable to load this workout.");
+
+        setError(
+          getApiError(
+            error,
+            "Unable to load this workout."
+          )
+        );
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadWorkout();
+    fetchWorkout();
   }, [id]);
 
   async function handleDelete() {
@@ -54,36 +87,48 @@ function WorkoutDetails() {
       navigate("/workouts");
     } catch (error) {
       console.error(error);
-      setDeleteError("Unable to delete this workout.");
+
+      setDeleteError(
+        getApiError(
+          error,
+          "Unable to delete this workout."
+        )
+      );
     } finally {
       setIsDeleting(false);
     }
   }
 
   if (isLoading) {
-    return <p>Loading workout...</p>;
+    return (
+      <LoadingSpinner message="Loading workout..." />
+    );
   }
 
   if (error) {
     return (
-      <div className="empty-state">
-        <h2>Unable to load workout</h2>
-        <p>{error}</p>
-
-        <Link to="/workouts">
-          Back to workouts
-        </Link>
-      </div>
+      <ErrorMessage
+        title="Unable to load workout"
+        message={error}
+        onRetry={loadWorkout}
+      />
     );
   }
 
   if (!workout) {
     return (
-      <div className="empty-state">
+      <div className="page-state empty-state">
         <h2>Workout not found</h2>
 
-        <Link to="/workouts">
-          Back to workouts
+        <p>
+          The workout you're looking for doesn't exist.
+        </p>
+
+        <Link
+          to="/workouts"
+          className="primary-button"
+        >
+          Back to Workouts
         </Link>
       </div>
     );
@@ -143,54 +188,68 @@ function WorkoutDetails() {
       {/* Exercises */}
       <div className="workout-details-exercises">
 
-        {workout.exercises.map((exercise) => (
-          <section
-            className="exercise-details-card"
-            key={exercise.id}
-          >
+        {workout.exercises?.length === 0 ? (
+          <div className="page-state empty-state">
+            <h2>No exercises</h2>
 
-            <div className="exercise-details-header">
+            <p>
+              This workout doesn't contain any exercises.
+            </p>
+          </div>
+        ) : (
+          workout.exercises?.map((exercise) => (
+            <section
+              className="exercise-details-card"
+              key={exercise.id}
+            >
 
-              <div>
-                <h2>{exercise.name}</h2>
+              <div className="exercise-details-header">
 
-                <p>
-                  {exercise.muscleGroup}
-                </p>
-              </div>
+                <div>
+                  <h2>{exercise.name}</h2>
 
-            </div>
-
-            {/* Sets */}
-            <div className="sets-table">
-
-              <div className="sets-table-header">
-                <span>Set</span>
-                <span>Weight</span>
-                <span>Reps</span>
-              </div>
-
-              {exercise.sets.map((set, index) => (
-                <div
-                  className="sets-table-row"
-                  key={set.id}
-                >
-                  <span>{index + 1}</span>
-
-                  <span>
-                    {set.weight} kg
-                  </span>
-
-                  <span>
-                    {set.reps}
-                  </span>
+                  <p>
+                    {exercise.muscleGroup}
+                  </p>
                 </div>
-              ))}
 
-            </div>
+              </div>
 
-          </section>
-        ))}
+              {/* Sets */}
+              <div className="sets-table">
+
+                <div className="sets-table-header">
+                  <span>Set</span>
+                  <span>Weight</span>
+                  <span>Reps</span>
+                </div>
+
+                {exercise.sets?.map(
+                  (set, index) => (
+                    <div
+                      className="sets-table-row"
+                      key={set.id}
+                    >
+                      <span>
+                        {index + 1}
+                      </span>
+
+                      <span>
+                        {set.weight} kg
+                      </span>
+
+                      <span>
+                        {set.reps}
+                      </span>
+                    </div>
+                  )
+                )}
+
+              </div>
+
+            </section>
+          ))
+        )}
 
       </div>
 

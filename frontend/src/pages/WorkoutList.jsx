@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import { getWorkouts } from "../services/workoutService";
 import getApiError from "../utils/getApiError";
+
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorMessage from "../components/ErrorMessage";
 
 function WorkoutList() {
   const [workouts, setWorkouts] = useState([]);
@@ -57,28 +61,17 @@ function WorkoutList() {
 
   if (isLoading) {
     return (
-      <div className="page-state">
-        <div className="loading-spinner"></div>
-
-        <p>Loading workouts...</p>
-      </div>
+      <LoadingSpinner message="Loading workouts..." />
     );
   }
 
   if (error) {
     return (
-      <div className="page-state error-state">
-        <h2>Unable to load workouts</h2>
-
-        <p>{error}</p>
-
-        <button
-          className="primary-button"
-          onClick={loadWorkouts}
-        >
-          Try Again
-        </button>
-      </div>
+      <ErrorMessage
+        title="Unable to load workouts"
+        message={error}
+        onRetry={loadWorkouts}
+      />
     );
   }
 

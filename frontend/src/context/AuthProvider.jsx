@@ -20,11 +20,19 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(getStoredUser);
 
   function login(userData) {
-    localStorage.setItem("user", JSON.stringify(userData));
+    console.log("LOGIN RESPONSE:", userData);
 
-    if (userData.token) {
-      localStorage.setItem("token", userData.token);
+    const token =
+      userData.token ||
+      userData.accessToken ||
+      userData.data?.token ||
+      userData.data?.accessToken;
+
+    if (token) {
+      localStorage.setItem("token", token);
     }
+
+    localStorage.setItem("user", JSON.stringify(userData));
 
     setUser(userData);
   }
