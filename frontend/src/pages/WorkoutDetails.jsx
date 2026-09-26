@@ -1,73 +1,34 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useState } from "react";
 
 import {
   getWorkout,
   deleteWorkout,
 } from "../services/workoutService";
 
-import getApiError from "../utils/getApiError";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+
+import useFetch from "../hooks/useFetch";
+import getApiError from "../utils/getApiError";
 
 function WorkoutDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [workout, setWorkout] = useState(null);
+  const fetchWorkout = useCallback(() => {
+    return getWorkout(id);
+  }, [id]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    data: workout,
+    isLoading,
+    error,
+    refetch,
+  } = useFetch(fetchWorkout);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-
-  async function loadWorkout() {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      const data = await getWorkout(id);
-
-      setWorkout(data);
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        getApiError(
-          error,
-          "Unable to load this workout."
-        )
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    async function fetchWorkout() {
-      try {
-        setError("");
-
-        const data = await getWorkout(id);
-
-        setWorkout(data);
-      } catch (error) {
-        console.error(error);
-
-        setError(
-          getApiError(
-            error,
-            "Unable to load this workout."
-          )
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchWorkout();
-  }, [id]);
 
   async function handleDelete() {
     const confirmed = window.confirm(
@@ -110,7 +71,7 @@ function WorkoutDetails() {
       <ErrorMessage
         title="Unable to load workout"
         message={error}
-        onRetry={loadWorkout}
+        onRetry={refetch}
       />
     );
   }
@@ -137,7 +98,6 @@ function WorkoutDetails() {
   return (
     <div className="workout-details">
 
-      {/* Header */}
       <div className="workout-details-header">
 
         <div>
@@ -178,17 +138,16 @@ function WorkoutDetails() {
 
       </div>
 
-      {/* Delete error */}
       {deleteError && (
         <p className="form-error">
           {deleteError}
         </p>
       )}
 
-      {/* Exercises */}
       <div className="workout-details-exercises">
 
-        {workout.exercises?.length === 0 ? (
+        {!workout.exercises ||
+          workout.exercises.length === 0 ? (
           <div className="page-state empty-state">
             <h2>No exercises</h2>
 
@@ -197,7 +156,7 @@ function WorkoutDetails() {
             </p>
           </div>
         ) : (
-          workout.exercises?.map((exercise) => (
+          workout.exercises.map((exercise) => (
             <section
               className="exercise-details-card"
               key={exercise.id}
@@ -215,7 +174,6 @@ function WorkoutDetails() {
 
               </div>
 
-              {/* Sets */}
               <div className="sets-table">
 
                 <div className="sets-table-header">

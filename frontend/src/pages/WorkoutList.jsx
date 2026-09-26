@@ -1,63 +1,19 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getWorkouts } from "../services/workoutService";
-import getApiError from "../utils/getApiError";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
 
+import useFetch from "../hooks/useFetch";
+
 function WorkoutList() {
-  const [workouts, setWorkouts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  async function loadWorkouts() {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      const data = await getWorkouts();
-
-      setWorkouts(data);
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        getApiError(
-          error,
-          "Unable to load workouts."
-        )
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    async function fetchWorkouts() {
-      try {
-        setError("");
-
-        const data = await getWorkouts();
-
-        setWorkouts(data);
-      } catch (error) {
-        console.error(error);
-
-        setError(
-          getApiError(
-            error,
-            "Unable to load workouts."
-          )
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchWorkouts();
-  }, []);
+  const {
+    data: workouts,
+    isLoading,
+    error,
+    refetch,
+  } = useFetch(getWorkouts);
 
   if (isLoading) {
     return (
@@ -70,7 +26,7 @@ function WorkoutList() {
       <ErrorMessage
         title="Unable to load workouts"
         message={error}
-        onRetry={loadWorkouts}
+        onRetry={refetch}
       />
     );
   }
@@ -95,7 +51,7 @@ function WorkoutList() {
         </Link>
       </div>
 
-      {workouts.length === 0 ? (
+      {!workouts || workouts.length === 0 ? (
         <div className="page-state empty-state">
           <h2>No workouts yet</h2>
 
