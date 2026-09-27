@@ -1,66 +1,116 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+
 import {
   getWorkout,
   updateWorkout,
 } from "../services/workoutService";
 
-const exercises = [
-  {
-    id: 1,
-    name: "Bench Press",
-    muscleGroup: "Chest",
-  },
-  {
-    id: 2,
-    name: "Squat",
-    muscleGroup: "Legs",
-  },
-  {
-    id: 3,
-    name: "Pull Up",
-    muscleGroup: "Back",
-  },
-  {
-    id: 4,
-    name: "Shoulder Press",
-    muscleGroup: "Shoulders",
-  },
-];
+import { getExercises } from "../services/exerciseService";
+
+import useFetch from "../hooks/useFetch";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorMessage from "../components/ErrorMessage";
+import getApiError from "../utils/getApiError";
 
 function EditWorkout() {
   const { id } = useParams();
+
+  const fetchWorkout = useCallback(() => {
+    return getWorkout(id);
+  }, [id]);
+
+  const {
+    data: workout,
+    isLoading: workoutLoading,
+    error: workoutError,
+    refetch: refetchWorkout,
+  } = useFetch(fetchWorkout);
+
+  const {
+    data: exercises,
+    isLoading: exercisesLoading,
+    error: exercisesError,
+    refetch: refetchExercises,
+  } = useFetch(getExercises);
+
+  if (workoutLoading || exercisesLoading) {
+    return (
+      <LoadingSpinner message="Loading workout..." />
+    );
+  }
+
+  if (workoutError) {
+    return (
+      <ErrorMessage
+        title="Unable to load workout"
+        message={workoutError}
+        onRetry={refetchWorkout}
+      />
+    );
+  }
+
+  if (exercisesError) {
+    return (
+      <ErrorMessage
+        title="Unable to load exercises"
+        message={exercisesError}
+        onRetry={refetchExercises}
+      />
+    );
+  }
+
+  if (!workout) {
+    return (
+      <div className="page-state empty-state">
+        <h2>Workout not found</h2>
+
+        <p>
+          The workout you're trying to edit doesn't exist.
+        </p>
+
+        <Link
+          to="/workouts"
+          className="primary-button"
+        >
+          Back to Workouts
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <EditWorkoutForm
+      key={workout.id}
+      workout={workout}
+      exercises={exercises || []}
+    />
+  );
+}
+
+
+// ======================================================
+// EDIT WORKOUT FORM
+// ======================================================
+
+function EditWorkoutForm({ workout, exercises }) {
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const [workoutName, setWorkoutName] = useState("");
-  const [selectedExercises, setSelectedExercises] = useState([]);
+  const [workoutName, setWorkoutName] = useState(
+    workout.name || ""
+  );
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedExercises, setSelectedExercises] =
+    useState(workout.exercises || []);
+
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function loadWorkout() {
-      try {
-        setIsLoading(true);
-        setError("");
-
-        const data = await getWorkout(id);
-
-        setWorkoutName(data.name);
-
-        setSelectedExercises(data.exercises);
-      } catch (error) {
-        console.error(error);
-        setError("Unable to load this workout.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadWorkout();
-  }, [id]);
+  // ======================================================
+  // ADD EXERCISE
+  // ======================================================
 
   function addExercise(exercise) {
     const alreadyAdded = selectedExercises.some(
@@ -73,6 +123,7 @@ function EditWorkout() {
 
     const exerciseWithSet = {
       ...exercise,
+
       sets: [
         {
           id: 1,
@@ -88,6 +139,11 @@ function EditWorkout() {
     ]);
   }
 
+
+  // ======================================================
+  // REMOVE EXERCISE
+  // ======================================================
+
   function removeExercise(exerciseId) {
     setSelectedExercises(
       selectedExercises.filter(
@@ -95,6 +151,11 @@ function EditWorkout() {
       )
     );
   }
+
+
+  // ======================================================
+  // ADD SET
+  // ======================================================
 
   function addSet(exerciseId) {
     setSelectedExercises(
@@ -119,6 +180,11 @@ function EditWorkout() {
       })
     );
   }
+
+
+  // ======================================================
+  // UPDATE SET
+  // ======================================================
 
   function updateSet(
     exerciseId,
@@ -150,18 +216,29 @@ function EditWorkout() {
     );
   }
 
+
+  // ======================================================
+  // SUBMIT
+  // ======================================================
+
   async function handleSubmit(event) {
     event.preventDefault();
 
-    setError("");
+    setSaveError("");
 
     if (!workoutName.trim()) {
-      setError("Please enter a workout name.");
+      setSaveError(
+        "Please enter a workout name."
+      );
+
       return;
     }
 
     if (selectedExercises.length === 0) {
-      setError("Please add at least one exercise.");
+      setSaveError(
+        "Please add at least one exercise."
+      );
+
       return;
     }
 
@@ -188,37 +265,31 @@ function EditWorkout() {
       navigate(`/workouts/${id}`);
     } catch (error) {
       console.error(error);
-      setError(
-        "Unable to update workout. Please try again."
+
+      setSaveError(
+        getApiError(
+          error,
+          "Unable to update workout."
+        )
       );
     } finally {
       setIsSaving(false);
     }
   }
 
-  if (isLoading) {
-    return <p>Loading workout...</p>;
-  }
 
-  if (error && !workoutName) {
-    return (
-      <div className="empty-state">
-        <h2>Unable to load workout</h2>
-
-        <p>{error}</p>
-
-        <Link to="/workouts">
-          Back to workouts
-        </Link>
-      </div>
-    );
-  }
+  // ======================================================
+  // UI
+  // ======================================================
 
   return (
     <div className="create-workout">
 
+      {/* HEADER */}
+
       <div className="page-header">
         <div>
+
           <Link
             to={`/workouts/${id}`}
             className="back-link"
@@ -229,15 +300,19 @@ function EditWorkout() {
           <h1>Edit Workout</h1>
 
           <p>
-            Update your workout and exercise details.
+            Update your workout and track your sets.
           </p>
+
         </div>
       </div>
 
+
       <form onSubmit={handleSubmit}>
 
-        {/* Workout name */}
+        {/* WORKOUT NAME */}
+
         <div className="form-group">
+
           <label htmlFor="workoutName">
             Workout Name
           </label>
@@ -251,28 +326,49 @@ function EditWorkout() {
             }
             placeholder="e.g. Push Day"
           />
+
         </div>
 
-        {/* Available exercises */}
+
+        {/* AVAILABLE EXERCISES */}
+
         <section className="workout-section">
+
           <h2>Add Exercises</h2>
 
-          <div className="available-exercises">
-            {exercises.map((exercise) => (
-              <button
-                type="button"
-                key={exercise.id}
-                onClick={() =>
-                  addExercise(exercise)
-                }
-              >
-                {exercise.name}
-              </button>
-            ))}
-          </div>
+          {exercises.length === 0 ? (
+            <div className="page-state empty-state">
+
+              <h3>No exercises available</h3>
+
+              <p>
+                No exercises were found.
+              </p>
+
+            </div>
+          ) : (
+            <div className="available-exercises">
+
+              {exercises.map((exercise) => (
+                <button
+                  type="button"
+                  key={exercise.id}
+                  onClick={() =>
+                    addExercise(exercise)
+                  }
+                >
+                  {exercise.name}
+                </button>
+              ))}
+
+            </div>
+          )}
+
         </section>
 
-        {/* Selected exercises */}
+
+        {/* SELECTED EXERCISES */}
+
         <section className="workout-section">
 
           <h2>Selected Exercises</h2>
@@ -283,18 +379,26 @@ function EditWorkout() {
             </p>
           ) : (
             selectedExercises.map((exercise) => (
+
               <div
                 className="selected-exercise"
                 key={exercise.id}
               >
 
+                {/* EXERCISE HEADER */}
+
                 <div className="selected-exercise-header">
+
                   <div>
-                    <h3>{exercise.name}</h3>
+
+                    <h3>
+                      {exercise.name}
+                    </h3>
 
                     <p>
                       {exercise.muscleGroup}
                     </p>
+
                   </div>
 
                   <button
@@ -307,13 +411,17 @@ function EditWorkout() {
                   >
                     Remove
                   </button>
+
                 </div>
 
-                {/* Sets */}
+
+                {/* SETS */}
+
                 <div className="sets">
 
-                  {exercise.sets.map(
+                  {exercise.sets?.map(
                     (set, index) => (
+
                       <div
                         className="set-row"
                         key={set.id}
@@ -325,6 +433,8 @@ function EditWorkout() {
 
                         <input
                           type="number"
+                          min="0"
+                          step="0.5"
                           placeholder="Weight"
                           value={set.weight}
                           onChange={(event) =>
@@ -339,6 +449,7 @@ function EditWorkout() {
 
                         <input
                           type="number"
+                          min="1"
                           placeholder="Reps"
                           value={set.reps}
                           onChange={(event) =>
@@ -352,8 +463,10 @@ function EditWorkout() {
                         />
 
                       </div>
+
                     )
                   )}
+
 
                   <button
                     type="button"
@@ -367,27 +480,32 @@ function EditWorkout() {
                 </div>
 
               </div>
+
             ))
           )}
 
         </section>
 
-        {/* Error */}
-        {error && (
+
+        {/* ERROR */}
+
+        {saveError && (
           <p className="form-error">
-            {error}
+            {saveError}
           </p>
         )}
 
-        {/* Save */}
+
+        {/* UPDATE */}
+
         <button
           type="submit"
           className="primary-button"
           disabled={isSaving}
         >
           {isSaving
-            ? "Saving..."
-            : "Save Changes"}
+            ? "Updating..."
+            : "Update Workout"}
         </button>
 
       </form>
