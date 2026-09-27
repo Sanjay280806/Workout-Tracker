@@ -4,14 +4,19 @@ import WorkoutCard from "../components/WorkoutCard";
 function Dashboard() {
   return (
     <div className="dashboard">
+
       <section className="dashboard-header">
         <div>
           <h1>Good morning 👋</h1>
-          <p>Ready for your next workout?</p>
+
+          <p>
+            Ready for your next workout?
+          </p>
         </div>
       </section>
 
       <section className="stats-grid">
+
         <StatCard
           title="Total Workouts"
           value="24"
@@ -29,14 +34,17 @@ function Dashboard() {
           value="12,450 kg"
           description="All time"
         />
+
       </section>
 
       <section className="recent-workouts">
+
         <div className="section-header">
           <h2>Recent Workouts</h2>
         </div>
 
         <div className="workout-list">
+
           <WorkoutCard
             name="Push Day"
             duration="45 min"
@@ -54,8 +62,11 @@ function Dashboard() {
             duration="60 min"
             exercises="Quads • Hamstrings • Calves"
           />
+
         </div>
+
       </section>
+
     </div>
   );
 }
