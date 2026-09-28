@@ -30,7 +30,8 @@ router.post(
     "/",
     authenticate,
     validate(createWorkoutSchema),
-    createWorkoutHandler
+    createWorkoutHandler,
+    
 );
 
 router.get(
