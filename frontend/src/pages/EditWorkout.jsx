@@ -12,6 +12,7 @@ import useFetch from "../hooks/useFetch";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
 import getApiError from "../utils/getApiError";
+import validateWorkout from "../utils/validateWorkout";
 
 function EditWorkout() {
   const { id } = useParams();
@@ -226,19 +227,17 @@ function EditWorkoutForm({ workout, exercises }) {
 
     setSaveError("");
 
-    if (!workoutName.trim()) {
-      setSaveError(
-        "Please enter a workout name."
-      );
+    const validationErrors = validateWorkout({
+      workoutName,
+      selectedExercises,
+    });
 
-      return;
-    }
+    const firstError = Object.values(
+      validationErrors
+    )[0];
 
-    if (selectedExercises.length === 0) {
-      setSaveError(
-        "Please add at least one exercise."
-      );
-
+    if (firstError) {
+      setSaveError(firstError);
       return;
     }
 
@@ -260,7 +259,10 @@ function EditWorkoutForm({ workout, exercises }) {
     try {
       setIsSaving(true);
 
-      await updateWorkout(id, workoutData);
+      await updateWorkout(
+        id,
+        workoutData
+      );
 
       navigate(`/workouts/${id}`);
     } catch (error) {
@@ -276,7 +278,6 @@ function EditWorkoutForm({ workout, exercises }) {
       setIsSaving(false);
     }
   }
-
 
   // ======================================================
   // UI

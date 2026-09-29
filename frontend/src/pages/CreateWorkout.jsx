@@ -13,6 +13,7 @@ import useFetch from "../hooks/useFetch";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import validateWorkout from "../utils/validateWorkout";
 
 function CreateWorkout() {
   const navigate = useNavigate();
@@ -130,19 +131,17 @@ function CreateWorkout() {
 
     setError("");
 
-    if (!workoutName.trim()) {
-      setError(
-        "Please enter a workout name."
-      );
+    const validationErrors = validateWorkout({
+      workoutName,
+      selectedExercises,
+    });
 
-      return;
-    }
+    const firstError = Object.values(
+      validationErrors
+    )[0];
 
-    if (selectedExercises.length === 0) {
-      setError(
-        "Please add at least one exercise."
-      );
-
+    if (firstError) {
+      setError(firstError);
       return;
     }
 
