@@ -1,30 +1,42 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import FormInput from "../components/FormInput";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { login as loginRequest } from "../services/authService";
 import { useAuth } from "../context/useAuth";
 import getApiError from "../utils/getApiError";
 
 function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] =
+    useState(false);
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
 
   function handleChange(event) {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
-    setFormData({
-      ...formData,
+    setFormData((current) => ({
+      ...current,
       [name]: value,
-    });
+    }));
   }
+
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -32,30 +44,45 @@ function Login() {
     setError("");
 
     if (!formData.email.trim()) {
-      setError("Please enter your email.");
+      setError("Email is required.");
       return;
     }
 
     if (!formData.password) {
-      setError("Please enter your password.");
+      setError("Password is required.");
       return;
     }
 
     try {
       setIsLoading(true);
 
-      const userData = await loginRequest(formData);
+      const userData =
+        await loginRequest(formData);
 
       login(userData);
 
-      navigate("/dashboard");
+      /*
+       * If ProtectedRoute redirected the user
+       * here, return them to their original page.
+       *
+       * Otherwise go to dashboard.
+       */
+
+      const from =
+        location.state?.from?.pathname ||
+        "/dashboard";
+
+      navigate(from, {
+        replace: true,
+      });
+
     } catch (error) {
       console.error(error);
 
       setError(
         getApiError(
           error,
-          "Login failed. Please check your credentials."
+          "Unable to login. Please try again."
         )
       );
     } finally {
@@ -63,61 +90,98 @@ function Login() {
     }
   }
 
+
   return (
     <div className="auth-page">
-      <form
-        className="auth-card"
-        onSubmit={handleSubmit}
-      >
-        <div className="auth-header">
-          <h1>Welcome back</h1>
 
-          <p>
-            Login to continue tracking your workouts.
-          </p>
-        </div>
+      <div className="auth-card">
 
-        <FormInput
-          label="Email"
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="you@example.com"
-        />
+        <h1>Login</h1>
 
-        <FormInput
-          label="Password"
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Enter password"
-        />
+        <p>
+          Login to continue to your workouts.
+        </p>
 
-        {error && (
-          <p className="form-error">
-            {error}
-          </p>
-        )}
 
-        <button
-          type="submit"
-          className="primary-button"
-          disabled={isLoading}
-        >
-          {isLoading
-            ? "Logging in..."
-            : "Login"}
-        </button>
+        <form onSubmit={handleSubmit}>
+
+          {/* EMAIL */}
+
+          <div className="form-group">
+
+            <label htmlFor="email">
+              Email
+            </label>
+
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+
+          </div>
+
+
+          {/* PASSWORD */}
+
+          <div className="form-group">
+
+            <label htmlFor="password">
+              Password
+            </label>
+
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
+
+          </div>
+
+
+          {/* ERROR */}
+
+          {error && (
+            <p className="form-error">
+              {error}
+            </p>
+          )}
+
+
+          {/* SUBMIT */}
+
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={isLoading}
+          >
+            {isLoading
+              ? "Logging in..."
+              : "Login"}
+          </button>
+
+        </form>
+
+
+        {/* REGISTER */}
 
         <p className="auth-footer">
           Don't have an account?{" "}
           <Link to="/register">
-            Create one
+            Register
           </Link>
         </p>
-      </form>
+
+      </div>
+
     </div>
   );
 }
