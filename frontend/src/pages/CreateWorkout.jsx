@@ -1,18 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  createWorkout,
-} from "../services/workoutService";
-
-import {
-  getExercises,
-} from "../services/exerciseService";
+import { createWorkout } from "../services/workoutService";
+import { getExercises } from "../services/exerciseService";
 
 import useFetch from "../hooks/useFetch";
+import useWorkoutForm from "../hooks/useWorkoutForm";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+
+import getApiError from "../utils/getApiError";
 import validateWorkout from "../utils/validateWorkout";
 
 function CreateWorkout() {
@@ -25,106 +23,21 @@ function CreateWorkout() {
     refetch: refetchExercises,
   } = useFetch(getExercises);
 
-  const [workoutName, setWorkoutName] = useState("");
-  const [selectedExercises, setSelectedExercises] =
-    useState([]);
+  const {
+    workoutName,
+    setWorkoutName,
+    selectedExercises,
+    addExercise,
+    removeExercise,
+    addSet,
+    updateSet,
+    getWorkoutPayload,
+  } = useWorkoutForm();
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
   const exerciseList = exercises || [];
-
-  function addExercise(exercise) {
-    const alreadyAdded =
-      selectedExercises.some(
-        (item) => item.id === exercise.id
-      );
-
-    if (alreadyAdded) {
-      return;
-    }
-
-    const exerciseWithSet = {
-      ...exercise,
-
-      sets: [
-        {
-          id: 1,
-          weight: "",
-          reps: "",
-        },
-      ],
-    };
-
-    setSelectedExercises([
-      ...selectedExercises,
-      exerciseWithSet,
-    ]);
-  }
-
-  function removeExercise(exerciseId) {
-    setSelectedExercises(
-      selectedExercises.filter(
-        (exercise) =>
-          exercise.id !== exerciseId
-      )
-    );
-  }
-
-  function addSet(exerciseId) {
-    setSelectedExercises(
-      selectedExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) {
-          return exercise;
-        }
-
-        const newSet = {
-          id: exercise.sets.length + 1,
-          weight: "",
-          reps: "",
-        };
-
-        return {
-          ...exercise,
-
-          sets: [
-            ...exercise.sets,
-            newSet,
-          ],
-        };
-      })
-    );
-  }
-
-  function updateSet(
-    exerciseId,
-    setId,
-    field,
-    value
-  ) {
-    setSelectedExercises(
-      selectedExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) {
-          return exercise;
-        }
-
-        return {
-          ...exercise,
-
-          sets: exercise.sets.map((set) => {
-            if (set.id !== setId) {
-              return set;
-            }
-
-            return {
-              ...set,
-              [field]: value,
-            };
-          }),
-        };
-      })
-    );
-  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -145,20 +58,7 @@ function CreateWorkout() {
       return;
     }
 
-    const workoutData = {
-      name: workoutName.trim(),
-
-      exercises: selectedExercises.map(
-        (exercise) => ({
-          exerciseId: exercise.id,
-
-          sets: exercise.sets.map((set) => ({
-            weight: Number(set.weight),
-            reps: Number(set.reps),
-          })),
-        })
-      ),
-    };
+    const workoutData = getWorkoutPayload();
 
     try {
       setIsSaving(true);
@@ -170,7 +70,10 @@ function CreateWorkout() {
       console.error(error);
 
       setError(
-        "Unable to create workout. Please try again."
+        getApiError(
+          error,
+          "Unable to create workout."
+        )
       );
     } finally {
       setIsSaving(false);
@@ -179,9 +82,7 @@ function CreateWorkout() {
 
   if (exercisesLoading) {
     return (
-      <LoadingSpinner
-        message="Loading exercises..."
-      />
+      <LoadingSpinner message="Loading exercises..." />
     );
   }
 
@@ -197,28 +98,20 @@ function CreateWorkout() {
 
   return (
     <div className="create-workout">
-
-      {/* Header */}
-
       <div className="page-header">
-
         <div>
           <h1>Create Workout</h1>
 
           <p>
-            Build your workout and track
-            your sets.
+            Build your workout and track your sets.
           </p>
         </div>
-
       </div>
 
       <form onSubmit={handleSubmit}>
-
-        {/* Workout name */}
+        {/* Workout Name */}
 
         <div className="form-group">
-
           <label htmlFor="workoutName">
             Workout Name
           </label>
@@ -228,59 +121,45 @@ function CreateWorkout() {
             type="text"
             value={workoutName}
             onChange={(event) =>
-              setWorkoutName(
-                event.target.value
-              )
+              setWorkoutName(event.target.value)
             }
             placeholder="e.g. Push Day"
           />
-
         </div>
 
-        {/* Available exercises */}
+        {/* Available Exercises */}
 
         <section className="workout-section">
-
           <h2>Add Exercises</h2>
 
           {exerciseList.length === 0 ? (
             <div className="page-state empty-state">
-
-              <h3>
-                No exercises available
-              </h3>
+              <h3>No exercises available</h3>
 
               <p>
                 No exercises were found.
               </p>
-
             </div>
           ) : (
             <div className="available-exercises">
-
-              {exerciseList.map(
-                (exercise) => (
-                  <button
-                    type="button"
-                    key={exercise.id}
-                    onClick={() =>
-                      addExercise(exercise)
-                    }
-                  >
-                    {exercise.name}
-                  </button>
-                )
-              )}
-
+              {exerciseList.map((exercise) => (
+                <button
+                  type="button"
+                  key={exercise.id}
+                  onClick={() =>
+                    addExercise(exercise)
+                  }
+                >
+                  {exercise.name}
+                </button>
+              ))}
             </div>
           )}
-
         </section>
 
-        {/* Selected exercises */}
+        {/* Selected Exercises */}
 
         <section className="workout-section">
-
           <h2>Selected Exercises</h2>
 
           {selectedExercises.length === 0 ? (
@@ -288,108 +167,88 @@ function CreateWorkout() {
               No exercises selected.
             </p>
           ) : (
-            selectedExercises.map(
-              (exercise) => (
-                <div
-                  className="selected-exercise"
-                  key={exercise.id}
-                >
+            selectedExercises.map((exercise) => (
+              <div
+                className="selected-exercise"
+                key={exercise.id}
+              >
+                <div className="selected-exercise-header">
+                  <div>
+                    <h3>{exercise.name}</h3>
 
-                  {/* Exercise header */}
-
-                  <div className="selected-exercise-header">
-
-                    <div>
-
-                      <h3>
-                        {exercise.name}
-                      </h3>
-
-                      <p>
-                        {exercise.muscleGroup}
-                      </p>
-
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeExercise(
-                          exercise.id
-                        )
-                      }
-                    >
-                      Remove
-                    </button>
-
+                    <p>
+                      {exercise.muscleGroup}
+                    </p>
                   </div>
 
-                  {/* Sets */}
-
-                  <div className="sets">
-
-                    {exercise.sets.map(
-                      (set, index) => (
-                        <div
-                          className="set-row"
-                          key={set.id}
-                        >
-
-                          <span>
-                            Set {index + 1}
-                          </span>
-
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.5"
-                            placeholder="Weight"
-                            value={set.weight}
-                            onChange={(event) =>
-                              updateSet(
-                                exercise.id,
-                                set.id,
-                                "weight",
-                                event.target.value
-                              )
-                            }
-                          />
-
-                          <input
-                            type="number"
-                            min="1"
-                            placeholder="Reps"
-                            value={set.reps}
-                            onChange={(event) =>
-                              updateSet(
-                                exercise.id,
-                                set.id,
-                                "reps",
-                                event.target.value
-                              )
-                            }
-                          />
-
-                        </div>
-                      )
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        addSet(exercise.id)
-                      }
-                    >
-                      + Add Set
-                    </button>
-
-                  </div>
-
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeExercise(exercise.id)
+                    }
+                  >
+                    Remove
+                  </button>
                 </div>
-              )
-            )
-          )}
 
+                <div className="sets">
+                  {exercise.sets.map(
+                    (set, index) => (
+                      <div
+                        className="set-row"
+                        key={set.id}
+                      >
+                        <span>
+                          Set {index + 1}
+                        </span>
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          placeholder="Weight"
+                          value={set.weight}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              set.id,
+                              "weight",
+                              event.target.value
+                            )
+                          }
+                        />
+
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="Reps"
+                          value={set.reps}
+                          onChange={(event) =>
+                            updateSet(
+                              exercise.id,
+                              set.id,
+                              "reps",
+                              event.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    )
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      addSet(exercise.id)
+                    }
+                  >
+                    + Add Set
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </section>
 
         {/* Error */}
@@ -411,9 +270,7 @@ function CreateWorkout() {
             ? "Saving..."
             : "Save Workout"}
         </button>
-
       </form>
-
     </div>
   );
 }

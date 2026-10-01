@@ -1,11 +1,28 @@
-import { Navigate, Outlet } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
+
 import { useAuth } from "../context/useAuth";
 
 function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const {
+    isAuthenticated,
+  } = useAuth();
+
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          from: location,
+        }}
+      />
+    );
   }
 
   return <Outlet />;

@@ -1,5 +1,9 @@
 import { useCallback, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import {
   getWorkout,
@@ -9,8 +13,11 @@ import {
 import { getExercises } from "../services/exerciseService";
 
 import useFetch from "../hooks/useFetch";
+import useWorkoutForm from "../hooks/useWorkoutForm";
+
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+
 import getApiError from "../utils/getApiError";
 import validateWorkout from "../utils/validateWorkout";
 
@@ -67,7 +74,8 @@ function EditWorkout() {
         <h2>Workout not found</h2>
 
         <p>
-          The workout you're trying to edit doesn't exist.
+          The workout you're trying to edit
+          doesn't exist.
         </p>
 
         <Link
@@ -94,128 +102,29 @@ function EditWorkout() {
 // EDIT WORKOUT FORM
 // ======================================================
 
-function EditWorkoutForm({ workout, exercises }) {
+function EditWorkoutForm({
+  workout,
+  exercises,
+}) {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [workoutName, setWorkoutName] = useState(
-    workout.name || ""
-  );
+  const {
+    workoutName,
+    setWorkoutName,
+    selectedExercises,
+    addExercise,
+    removeExercise,
+    addSet,
+    updateSet,
+    getWorkoutPayload,
+  } = useWorkoutForm(workout);
 
-  const [selectedExercises, setSelectedExercises] =
-    useState(workout.exercises || []);
+  const [isSaving, setIsSaving] =
+    useState(false);
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-
-
-  // ======================================================
-  // ADD EXERCISE
-  // ======================================================
-
-  function addExercise(exercise) {
-    const alreadyAdded = selectedExercises.some(
-      (item) => item.id === exercise.id
-    );
-
-    if (alreadyAdded) {
-      return;
-    }
-
-    const exerciseWithSet = {
-      ...exercise,
-
-      sets: [
-        {
-          id: 1,
-          weight: "",
-          reps: "",
-        },
-      ],
-    };
-
-    setSelectedExercises([
-      ...selectedExercises,
-      exerciseWithSet,
-    ]);
-  }
-
-
-  // ======================================================
-  // REMOVE EXERCISE
-  // ======================================================
-
-  function removeExercise(exerciseId) {
-    setSelectedExercises(
-      selectedExercises.filter(
-        (exercise) => exercise.id !== exerciseId
-      )
-    );
-  }
-
-
-  // ======================================================
-  // ADD SET
-  // ======================================================
-
-  function addSet(exerciseId) {
-    setSelectedExercises(
-      selectedExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) {
-          return exercise;
-        }
-
-        const newSet = {
-          id: exercise.sets.length + 1,
-          weight: "",
-          reps: "",
-        };
-
-        return {
-          ...exercise,
-          sets: [
-            ...exercise.sets,
-            newSet,
-          ],
-        };
-      })
-    );
-  }
-
-
-  // ======================================================
-  // UPDATE SET
-  // ======================================================
-
-  function updateSet(
-    exerciseId,
-    setId,
-    field,
-    value
-  ) {
-    setSelectedExercises(
-      selectedExercises.map((exercise) => {
-        if (exercise.id !== exerciseId) {
-          return exercise;
-        }
-
-        return {
-          ...exercise,
-
-          sets: exercise.sets.map((set) => {
-            if (set.id !== setId) {
-              return set;
-            }
-
-            return {
-              ...set,
-              [field]: value,
-            };
-          }),
-        };
-      })
-    );
-  }
+  const [saveError, setSaveError] =
+    useState("");
 
 
   // ======================================================
@@ -227,10 +136,11 @@ function EditWorkoutForm({ workout, exercises }) {
 
     setSaveError("");
 
-    const validationErrors = validateWorkout({
-      workoutName,
-      selectedExercises,
-    });
+    const validationErrors =
+      validateWorkout({
+        workoutName,
+        selectedExercises,
+      });
 
     const firstError = Object.values(
       validationErrors
@@ -241,20 +151,8 @@ function EditWorkoutForm({ workout, exercises }) {
       return;
     }
 
-    const workoutData = {
-      name: workoutName.trim(),
-
-      exercises: selectedExercises.map(
-        (exercise) => ({
-          exerciseId: exercise.id,
-
-          sets: exercise.sets.map((set) => ({
-            weight: Number(set.weight),
-            reps: Number(set.reps),
-          })),
-        })
-      ),
-    };
+    const workoutData =
+      getWorkoutPayload();
 
     try {
       setIsSaving(true);
@@ -279,6 +177,7 @@ function EditWorkoutForm({ workout, exercises }) {
     }
   }
 
+
   // ======================================================
   // UI
   // ======================================================
@@ -301,7 +200,8 @@ function EditWorkoutForm({ workout, exercises }) {
           <h1>Edit Workout</h1>
 
           <p>
-            Update your workout and track your sets.
+            Update your workout and track
+            your sets.
           </p>
 
         </div>
@@ -323,7 +223,9 @@ function EditWorkoutForm({ workout, exercises }) {
             type="text"
             value={workoutName}
             onChange={(event) =>
-              setWorkoutName(event.target.value)
+              setWorkoutName(
+                event.target.value
+              )
             }
             placeholder="e.g. Push Day"
           />
@@ -340,7 +242,9 @@ function EditWorkoutForm({ workout, exercises }) {
           {exercises.length === 0 ? (
             <div className="page-state empty-state">
 
-              <h3>No exercises available</h3>
+              <h3>
+                No exercises available
+              </h3>
 
               <p>
                 No exercises were found.
@@ -350,17 +254,21 @@ function EditWorkoutForm({ workout, exercises }) {
           ) : (
             <div className="available-exercises">
 
-              {exercises.map((exercise) => (
-                <button
-                  type="button"
-                  key={exercise.id}
-                  onClick={() =>
-                    addExercise(exercise)
-                  }
-                >
-                  {exercise.name}
-                </button>
-              ))}
+              {exercises.map(
+                (exercise) => (
+                  <button
+                    type="button"
+                    key={exercise.id}
+                    onClick={() =>
+                      addExercise(
+                        exercise
+                      )
+                    }
+                  >
+                    {exercise.name}
+                  </button>
+                )
+              )}
 
             </div>
           )}
@@ -372,117 +280,134 @@ function EditWorkoutForm({ workout, exercises }) {
 
         <section className="workout-section">
 
-          <h2>Selected Exercises</h2>
+          <h2>
+            Selected Exercises
+          </h2>
 
-          {selectedExercises.length === 0 ? (
+          {selectedExercises.length ===
+          0 ? (
             <p className="empty-state">
               No exercises selected.
             </p>
           ) : (
-            selectedExercises.map((exercise) => (
+            selectedExercises.map(
+              (exercise) => (
 
-              <div
-                className="selected-exercise"
-                key={exercise.id}
-              >
+                <div
+                  className="selected-exercise"
+                  key={exercise.id}
+                >
 
-                {/* EXERCISE HEADER */}
+                  {/* EXERCISE HEADER */}
 
-                <div className="selected-exercise-header">
+                  <div className="selected-exercise-header">
 
-                  <div>
+                    <div>
 
-                    <h3>
-                      {exercise.name}
-                    </h3>
+                      <h3>
+                        {exercise.name}
+                      </h3>
 
-                    <p>
-                      {exercise.muscleGroup}
-                    </p>
+                      <p>
+                        {exercise.muscleGroup}
+                      </p>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        removeExercise(
+                          exercise.id
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
 
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      removeExercise(
-                        exercise.id
+
+                  {/* SETS */}
+
+                  <div className="sets">
+
+                    {exercise.sets?.map(
+                      (set, index) => (
+
+                        <div
+                          className="set-row"
+                          key={set.id}
+                        >
+
+                          <span>
+                            Set {index + 1}
+                          </span>
+
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            placeholder="Weight"
+                            value={
+                              set.weight
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateSet(
+                                exercise.id,
+                                set.id,
+                                "weight",
+                                event.target
+                                  .value
+                              )
+                            }
+                          />
+
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            placeholder="Reps"
+                            value={
+                              set.reps
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateSet(
+                                exercise.id,
+                                set.id,
+                                "reps",
+                                event.target
+                                  .value
+                              )
+                            }
+                          />
+
+                        </div>
+
                       )
-                    }
-                  >
-                    Remove
-                  </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addSet(
+                          exercise.id
+                        )
+                      }
+                    >
+                      + Add Set
+                    </button>
+
+                  </div>
 
                 </div>
 
-
-                {/* SETS */}
-
-                <div className="sets">
-
-                  {exercise.sets?.map(
-                    (set, index) => (
-
-                      <div
-                        className="set-row"
-                        key={set.id}
-                      >
-
-                        <span>
-                          Set {index + 1}
-                        </span>
-
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          placeholder="Weight"
-                          value={set.weight}
-                          onChange={(event) =>
-                            updateSet(
-                              exercise.id,
-                              set.id,
-                              "weight",
-                              event.target.value
-                            )
-                          }
-                        />
-
-                        <input
-                          type="number"
-                          min="1"
-                          placeholder="Reps"
-                          value={set.reps}
-                          onChange={(event) =>
-                            updateSet(
-                              exercise.id,
-                              set.id,
-                              "reps",
-                              event.target.value
-                            )
-                          }
-                        />
-
-                      </div>
-
-                    )
-                  )}
-
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addSet(exercise.id)
-                    }
-                  >
-                    + Add Set
-                  </button>
-
-                </div>
-
-              </div>
-
-            ))
+              )
+            )
           )}
 
         </section>
