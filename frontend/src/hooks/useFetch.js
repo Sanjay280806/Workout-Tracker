@@ -1,38 +1,80 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import getApiError from "../utils/getApiError";
 
-function useFetch(fetchFunction, options = {}) {
+function useFetch(
+  fetchFunction,
+  options = {}
+) {
   const { immediate = true } = options;
 
   const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(immediate);
+  const [isLoading, setIsLoading] =
+    useState(immediate);
   const [error, setError] = useState("");
 
-  const refetch = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError("");
+  const abortControllerRef = useRef(null);
 
-      const result = await fetchFunction();
+  // ==========================================
+  // REFETCH
+  // ==========================================
+
+  const refetch = useCallback(async () => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+
+    abortControllerRef.current = controller;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await fetchFunction(
+        controller.signal
+      );
+
+      if (controller.signal.aborted) {
+        return null;
+      }
 
       setData(result);
 
       return result;
     } catch (error) {
+      // Request was intentionally cancelled
+      if (controller.signal.aborted) {
+        return null;
+      }
+
       console.error(error);
 
-      const message = getApiError(
-        error,
-        "Something went wrong."
+      setError(
+        getApiError(
+          error,
+          "Something went wrong."
+        )
       );
-
-      setError(message);
 
       return null;
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [fetchFunction]);
+
+  // ==========================================
+  // INITIAL FETCH
+  // ==========================================
 
   useEffect(() => {
     if (!immediate) {
@@ -41,29 +83,41 @@ function useFetch(fetchFunction, options = {}) {
 
     let cancelled = false;
 
+    const controller = new AbortController();
+
+    abortControllerRef.current = controller;
+
     async function load() {
       try {
+        const result = await fetchFunction(
+          controller.signal
+        );
+
+        if (cancelled || controller.signal.aborted) {
+          return;
+        }
+
+        setData(result);
         setError("");
-
-        const result = await fetchFunction();
-
-        if (!cancelled) {
-          setData(result);
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       } catch (error) {
-        if (!cancelled) {
-          console.error(error);
-
-          setError(
-            getApiError(
-              error,
-              "Something went wrong."
-            )
-          );
-
-          setIsLoading(false);
+        if (
+          cancelled ||
+          controller.signal.aborted
+        ) {
+          return;
         }
+
+        console.error(error);
+
+        setError(
+          getApiError(
+            error,
+            "Something went wrong."
+          )
+        );
+
+        setIsLoading(false);
       }
     }
 
@@ -71,8 +125,28 @@ function useFetch(fetchFunction, options = {}) {
 
     return () => {
       cancelled = true;
+      controller.abort();
+
+      if (
+        abortControllerRef.current ===
+        controller
+      ) {
+        abortControllerRef.current = null;
+      }
     };
   }, [fetchFunction, immediate]);
+
+  // ==========================================
+  // UNMOUNT CLEANUP
+  // ==========================================
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   return {
     data,

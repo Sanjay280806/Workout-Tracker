@@ -1,6 +1,13 @@
 import api from "./api";
 
-export async function createWorkout(workoutData) {
+
+// ==========================================
+// CREATE
+// ==========================================
+
+export async function createWorkout(
+  workoutData
+) {
   const response = await api.post(
     "/workouts",
     workoutData
@@ -10,8 +17,19 @@ export async function createWorkout(workoutData) {
 }
 
 
-export async function getWorkouts() {
-  const response = await api.get("/workouts");
+// ==========================================
+// GET ALL
+// ==========================================
+
+export async function getWorkouts(
+  signal
+) {
+  const response = await api.get(
+    "/workouts",
+    {
+      signal,
+    }
+  );
 
   const data = response.data;
 
@@ -31,9 +49,19 @@ export async function getWorkouts() {
 }
 
 
-export async function getWorkout(id) {
+// ==========================================
+// GET ONE
+// ==========================================
+
+export async function getWorkout(
+  id,
+  signal
+) {
   const response = await api.get(
-    `/workouts/${id}`
+    `/workouts/${id}`,
+    {
+      signal,
+    }
   );
 
   const data = response.data;
@@ -50,6 +78,10 @@ export async function getWorkout(id) {
 }
 
 
+// ==========================================
+// UPDATE
+// ==========================================
+
 export async function updateWorkout(
   id,
   workoutData
@@ -63,7 +95,13 @@ export async function updateWorkout(
 }
 
 
-export async function deleteWorkout(id) {
+// ==========================================
+// DELETE
+// ==========================================
+
+export async function deleteWorkout(
+  id
+) {
   const response = await api.delete(
     `/workouts/${id}`
   );

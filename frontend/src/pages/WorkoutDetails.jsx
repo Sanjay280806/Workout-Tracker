@@ -16,9 +16,12 @@ function WorkoutDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const fetchWorkout = useCallback(() => {
-    return getWorkout(id);
-  }, [id]);
+  const fetchWorkout = useCallback(
+    (signal) => {
+      return getWorkout(id, signal);
+    },
+    [id]
+  );
 
   const {
     data: workout,

@@ -24,9 +24,12 @@ import validateWorkout from "../utils/validateWorkout";
 function EditWorkout() {
   const { id } = useParams();
 
-  const fetchWorkout = useCallback(() => {
-    return getWorkout(id);
-  }, [id]);
+  const fetchWorkout = useCallback(
+    (signal) => {
+      return getWorkout(id, signal);
+    },
+    [id]
+  );
 
   const {
     data: workout,
@@ -285,7 +288,7 @@ function EditWorkoutForm({
           </h2>
 
           {selectedExercises.length ===
-          0 ? (
+            0 ? (
             <p className="empty-state">
               No exercises selected.
             </p>
