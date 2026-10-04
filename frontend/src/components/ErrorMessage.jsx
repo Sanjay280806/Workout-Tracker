@@ -5,18 +5,25 @@ function ErrorMessage({
 }) {
   return (
     <div className="page-state error-state">
+
+      <div className="error-icon">
+        !
+      </div>
+
       <h2>{title}</h2>
 
       <p>{message}</p>
 
       {onRetry && (
         <button
+          type="button"
           className="primary-button"
           onClick={onRetry}
         >
           Try Again
         </button>
       )}
+
     </div>
   );
 }

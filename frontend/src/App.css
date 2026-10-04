@@ -736,3 +736,37 @@
     transform: rotate(360deg);
   }
 }
+
+/* =========================================
+   ERROR STATE
+========================================= */
+
+.error-state {
+  padding: 40px 20px;
+}
+
+.error-icon {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid #dc2626;
+  border-radius: 50%;
+
+  color: #dc2626;
+
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.error-state h2 {
+  margin: 0;
+}
+
+.error-state p {
+  max-width: 500px;
+  line-height: 1.6;
+}
