@@ -22,7 +22,7 @@ import {
 
 import {
     AppError
-} from "../errors/app-error.js";
+} from "../errors/AppError.js";
 
 function generateObjectKey(userId, extension) {
 
@@ -165,4 +165,54 @@ export async function uploadFile({
             "FILE_UPLOAD_FAILED"
         );
     }
+}
+
+export async function getFileDownloadUrl({
+    fileId,
+    userId
+}) {
+
+    const file =
+        await findFileByIdForUser(
+            fileId,
+            userId
+        );
+
+    if (!file) {
+
+        throw new AppError(
+            "File not found",
+            404,
+            "FILE_NOT_FOUND"
+        );
+    }
+
+    const command =
+        new GetObjectCommand({
+            Bucket:
+                process.env.AWS_S3_BUCKET,
+
+            Key:
+                file.object_key,
+
+            ResponseContentType:
+                file.content_type,
+
+            ResponseContentDisposition:
+                `inline; filename="${file.original_filename}"`
+        });
+
+    const signedUrl =
+        await getSignedUrl(
+            s3Client,
+            command,
+            {
+                expiresIn: 300
+            }
+        );
+
+    return {
+        file,
+        signedUrl
+    };
 }
