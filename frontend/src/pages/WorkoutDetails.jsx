@@ -1,5 +1,10 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+
 import { useCallback, useState } from "react";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import {
   getWorkout,
@@ -12,14 +17,30 @@ import ErrorMessage from "../components/ErrorMessage";
 import useFetch from "../hooks/useFetch";
 import getApiError from "../utils/getApiError";
 
+function formatWorkoutDate(value) {
+  if (!value) {
+    return "Date unavailable";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 function WorkoutDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const fetchWorkout = useCallback(
-    (signal) => {
-      return getWorkout(id, signal);
-    },
+    (signal) => getWorkout(id, signal),
     [id]
   );
 
@@ -35,7 +56,7 @@ function WorkoutDetails() {
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this workout?"
+      "Are you sure you want to delete this workout? This action cannot be undone."
     );
 
     if (!confirmed) {
@@ -48,7 +69,7 @@ function WorkoutDetails() {
 
       await deleteWorkout(id);
 
-      navigate("/workouts");
+      navigate("/workouts", { replace: true });
     } catch (error) {
       console.error(error);
 
@@ -81,28 +102,39 @@ function WorkoutDetails() {
 
   if (!workout) {
     return (
-      <div className="page-state empty-state">
-        <h2>Workout not found</h2>
-
-        <p>
-          The workout you're looking for doesn't exist.
-        </p>
-
-        <Link
-          to="/workouts"
-          className="primary-button"
-        >
-          Back to Workouts
-        </Link>
-      </div>
+      <ErrorMessage
+        title="Workout not found"
+        message="This workout could not be found."
+      />
     );
   }
 
+  const exercises = Array.isArray(workout.exercises)
+    ? workout.exercises
+    : [];
+
+  const exerciseCount =
+    typeof workout.exerciseCount === "number"
+      ? workout.exerciseCount
+      : exercises.length;
+
+  const workoutDate = formatWorkoutDate(
+    workout.date ?? workout.createdAt
+  );
+
+  const duration =
+    workout.duration !== null &&
+    workout.duration !== undefined &&
+    workout.duration !== ""
+      ? typeof workout.duration === "number"
+        ? `${workout.duration} min`
+        : workout.duration
+      : "Not recorded";
+
   return (
-    <div className="workout-details">
-
+    <div className="workout-details-page">
+      {/* Header */}
       <div className="workout-details-header">
-
         <div>
           <Link
             to="/workouts"
@@ -111,15 +143,14 @@ function WorkoutDetails() {
             ← Back to workouts
           </Link>
 
-          <h1>{workout.name}</h1>
+          <h1>{workout.name || "Untitled Workout"}</h1>
 
-          <p>
-            {workout.date} · {workout.duration}
+          <p className="workout-details-date">
+            {workoutDate}
           </p>
         </div>
 
         <div className="workout-actions">
-
           <Link
             to={`/workouts/${id}/edit`}
             className="primary-button"
@@ -128,92 +159,130 @@ function WorkoutDetails() {
           </Link>
 
           <button
+            type="button"
             className="delete-button"
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting
-              ? "Deleting..."
-              : "Delete Workout"}
+            {isDeleting ? "Deleting..." : "Delete Workout"}
           </button>
-
         </div>
-
       </div>
 
       {deleteError && (
-        <p className="form-error">
-          {deleteError}
-        </p>
+        <div className="workout-delete-error" role="alert">
+          <p>{deleteError}</p>
+        </div>
       )}
 
-      <div className="workout-details-exercises">
+      {/* Summary */}
+      <section className="workout-details-summary">
+        <div className="workout-summary-card">
+          <span>Exercises</span>
+          <strong>{exerciseCount}</strong>
+        </div>
 
-        {!workout.exercises ||
-          workout.exercises.length === 0 ? (
+        <div className="workout-summary-card">
+          <span>Duration</span>
+          <strong>{duration}</strong>
+        </div>
+
+        <div className="workout-summary-card">
+          <span>Workout date</span>
+          <strong>{workoutDate}</strong>
+        </div>
+      </section>
+
+      {/* Exercises */}
+      <section className="workout-details-exercises">
+        <div className="workout-details-section-heading">
+          <h2>Exercises</h2>
+          <span>{exercises.length} listed</span>
+        </div>
+
+        {exercises.length === 0 ? (
           <div className="page-state empty-state">
-            <h2>No exercises</h2>
-
+            <h2>No exercises recorded</h2>
             <p>
-              This workout doesn't contain any exercises.
+              Edit this workout to add exercises and sets.
             </p>
+
+            <Link
+              to={`/workouts/${id}/edit`}
+              className="primary-button"
+            >
+              Edit Workout
+            </Link>
           </div>
         ) : (
-          workout.exercises.map((exercise) => (
-            <section
-              className="exercise-details-card"
-              key={exercise.id}
-            >
+          <div className="workout-exercise-list">
+            {exercises.map((exercise, exerciseIndex) => {
+              const sets = Array.isArray(exercise.sets)
+                ? exercise.sets
+                : [];
 
-              <div className="exercise-details-header">
+              return (
+                <article
+                  className="exercise-details-card"
+                  key={
+                    exercise.id ??
+                    exercise.exerciseId ??
+                    `${exercise.name}-${exerciseIndex}`
+                  }
+                >
+                  <div className="exercise-details-header">
+                    <div>
+                      <h3>{exercise.name || "Exercise"}</h3>
 
-                <div>
-                  <h2>{exercise.name}</h2>
-
-                  <p>
-                    {exercise.muscleGroup}
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="sets-table">
-
-                <div className="sets-table-header">
-                  <span>Set</span>
-                  <span>Weight</span>
-                  <span>Reps</span>
-                </div>
-
-                {exercise.sets?.map(
-                  (set, index) => (
-                    <div
-                      className="sets-table-row"
-                      key={set.id}
-                    >
-                      <span>
-                        {index + 1}
-                      </span>
-
-                      <span>
-                        {set.weight} kg
-                      </span>
-
-                      <span>
-                        {set.reps}
-                      </span>
+                      {exercise.muscleGroup && (
+                        <p>{exercise.muscleGroup}</p>
+                      )}
                     </div>
-                  )
-                )}
 
-              </div>
+                    <span className="exercise-set-count">
+                      {sets.length}{" "}
+                      {sets.length === 1 ? "set" : "sets"}
+                    </span>
+                  </div>
 
-            </section>
-          ))
+                  {sets.length === 0 ? (
+                    <p className="exercise-no-sets">
+                      No sets recorded.
+                    </p>
+                  ) : (
+                    <div className="sets-table-wrapper">
+                      <table className="workout-sets-table">
+                        <thead>
+                          <tr>
+                            <th>Set</th>
+                            <th>Weight (kg)</th>
+                            <th>Reps</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {sets.map((set, setIndex) => (
+                            <tr
+                              key={
+                                set.id ??
+                                `${exerciseIndex}-${setIndex}`
+                              }
+                            >
+                              <td>{setIndex + 1}</td>
+                              <td>{set.weight ?? "—"}</td>
+                              <td>{set.reps ?? "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         )}
-
-      </div>
-
+      </section>
     </div>
   );
 }
