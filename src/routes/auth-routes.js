@@ -2,6 +2,8 @@ import express from "express";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import { authenticate } from "../middleware/auth-middleware.js";
+import { createRateLimiter } from "../middleware/rate-limit.js";
+import redisClient from "../config/redis.js";
 
 import {
   findUserByEmail,
@@ -10,7 +12,23 @@ import {
 
 const router = express.Router();
 
-router.post("/register", async (req, res, next) => {
+// Rate limiter for registration
+const registerRateLimiter = createRateLimiter({
+  keyPrefix: "rate-limit:register",
+  limit: 5,
+  windowSeconds: 60,
+  keyGenerator: (req) => req.ip,
+});
+
+// Rate limiter for login
+const loginRateLimiter = createRateLimiter({
+  keyPrefix: "rate-limit:login",
+  limit: 5,
+  windowSeconds: 60,
+  keyGenerator: (req) => req.ip,
+});
+
+router.post("/register", registerRateLimiter, async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -44,13 +62,13 @@ router.post("/register", async (req, res, next) => {
       passwordHash,
     });
 
-    res.status(201).json(user);
+    return res.status(201).json(user);
   } catch (error) {
     next(error);
   }
 });
 
-router.post("/login", async (req, res, next) => {
+router.post("/login", loginRateLimiter, async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -76,7 +94,10 @@ router.post("/login", async (req, res, next) => {
       });
     }
 
-    const passwordValid = await argon2.verify(user.password_hash, password);
+    const passwordValid = await argon2.verify(
+      user.password_hash,
+      password
+    );
 
     if (!passwordValid) {
       return res.status(401).json({
@@ -86,6 +107,7 @@ router.post("/login", async (req, res, next) => {
         },
       });
     }
+
     const token = jwt.sign(
       {
         sub: String(user.id),
@@ -93,10 +115,10 @@ router.post("/login", async (req, res, next) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "15m",
-      },
+      }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
       accessToken: token,
       user: {
@@ -111,9 +133,9 @@ router.post("/login", async (req, res, next) => {
 });
 
 router.get("/me", authenticate, async (req, res) => {
-    res.status(200).json({
-        userId: req.user.id
-    });
+  return res.status(200).json({
+    userId: req.user.id,
+  });
 });
 
 export default router;

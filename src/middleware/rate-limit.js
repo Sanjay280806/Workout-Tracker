@@ -1,3 +1,4 @@
+import redisClient from "../config/redis.js";
 export function createRateLimiter({
     keyPrefix,
     limit,
