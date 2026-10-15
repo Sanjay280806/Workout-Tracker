@@ -1118,3 +1118,141 @@
   }
 }
 
+
+/* =========================================
+   PART 41: LIVE WORKOUT
+========================================= */
+
+.live-workout {
+  margin-bottom: 36px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.live-workout-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.live-workout-header h2 {
+  margin-bottom: 8px;
+  color: #111827;
+  font-size: 22px;
+}
+
+.live-workout-header p,
+.live-room-status,
+.live-help {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.live-status {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.live-status.is-connected {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.live-status.is-disconnected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.live-room-status {
+  margin-top: 14px;
+}
+
+.live-help {
+  margin-top: 8px;
+}
+
+.live-exercise-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.live-exercise-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.live-exercise-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.live-exercise-info strong {
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.live-exercise-info span {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.live-complete-button {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.live-complete-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.live-complete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.live-workout-error {
+  margin-top: 16px;
+  color: #b91c1c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .live-workout {
+    padding: 16px;
+  }
+
+  .live-workout-header {
+    flex-direction: column;
+  }
+
+  .live-exercise-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .live-complete-button {
+    width: 100%;
+  }
+}
+

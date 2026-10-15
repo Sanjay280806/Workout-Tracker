@@ -16,7 +16,7 @@ import ErrorMessage from "../components/ErrorMessage";
 
 import useFetch from "../hooks/useFetch";
 import getApiError from "../utils/getApiError";
-
+import LiveWorkout from "../components/LiveWorkout";
 function formatWorkoutDate(value) {
   if (!value) {
     return "Date unavailable";
@@ -124,8 +124,8 @@ function WorkoutDetails() {
 
   const duration =
     workout.duration !== null &&
-    workout.duration !== undefined &&
-    workout.duration !== ""
+      workout.duration !== undefined &&
+      workout.duration !== ""
       ? typeof workout.duration === "number"
         ? `${workout.duration} min`
         : workout.duration
@@ -192,6 +192,13 @@ function WorkoutDetails() {
           <strong>{workoutDate}</strong>
         </div>
       </section>
+
+      {/* Live Socket.IO Progress */}
+      <LiveWorkout
+        accessToken={localStorage.getItem("token")}
+        workoutId={id}
+        exercises={exercises}
+      />
 
       {/* Exercises */}
       <section className="workout-details-exercises">
