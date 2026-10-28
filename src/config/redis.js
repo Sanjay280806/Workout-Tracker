@@ -26,3 +26,9 @@ export const createRedisClient = () => {
 };
 
 export default redisConfig;
+
+// maxRetriesPerRequest: null: Mandatory for BullMQ workers. 
+// BullMQ handles its own retry logic and blocking commands (like BRPOPLPUSH). 
+// If ioredis has a limit on retries, blocking commands will fail during transient network drops.
+
+// retryStrategy: Ensures if Redis restarts or drops, the process attempts reconnections incrementally up to 5 seconds instead of crashing immediately.
