@@ -1,96 +1,118 @@
 import "dotenv/config";
+
 import { Worker } from "bullmq";
+import IORedis from "ioredis";
+
 import pool from "../db/pool.js";
 
-const connection = {
-    host: process.env.REDIS_HOST || "localhost",
-    port: Number(process.env.REDIS_PORT || 6379),
-    ...(process.env.REDIS_PASSWORD
-        ? { password: process.env.REDIS_PASSWORD }
-        : {}),
-};
+const connection = new IORedis(
+    process.env.REDIS_URL || "redis://localhost:6379",
+    {
+        maxRetriesPerRequest: null
+    }
+);
 
-export const workoutWorker = new Worker(
+const worker = new Worker(
     "workout-jobs",
+
     async (job) => {
-        if (job.name !== "workout-reminder") {
-            throw new Error(`Unknown job type: ${job.name}`);
-        }
+        // We only store IDs in the job.
+        const { workoutId, userId } = job.data;
 
-        const { workoutId, userId, scheduledAt } = job.data;
+        console.log(`Processing job: ${job.name}`);
+        console.log(`Workout ID: ${workoutId}`);
 
-        // Always recheck current PostgreSQL state.
+        // Always retrieve the latest data from PostgreSQL.
         const result = await pool.query(
-            `SELECT id, user_id, name, scheduled_at, status
-             FROM workouts
-             WHERE id = $1 AND user_id = $2`,
+            `
+            SELECT
+                w.id,
+                w.name,
+                w.scheduled_at,
+                w.status,
+                u.id AS user_id,
+                u.name AS user_name,
+                u.email AS user_email
+            FROM workouts AS w
+            JOIN users AS u
+                ON u.id = w.user_id
+            WHERE w.id = $1
+              AND w.user_id = $2;
+            `,
             [workoutId, userId]
         );
 
         const workout = result.rows[0];
 
         if (!workout) {
-            console.log(`Skipping job ${job.id}: workout no longer exists`);
-            return { skipped: true, reason: "WORKOUT_NOT_FOUND" };
+            console.log("Workout no longer exists. Skipping job.");
+            return;
         }
 
-        if (["cancelled", "completed"].includes(workout.status)) {
-            console.log(`Skipping job ${job.id}: workout is ${workout.status}`);
-            return { skipped: true, reason: "WORKOUT_INACTIVE" };
+        // Do not remind users about cancelled or completed workouts.
+        if (!["pending", "active"].includes(workout.status)) {
+            console.log(
+                `Workout status is ${workout.status}. Skipping reminder.`
+            );
+            return;
         }
 
         if (!workout.scheduled_at) {
-            return { skipped: true, reason: "NO_SCHEDULE" };
+            console.log("Workout has no scheduled time. Skipping reminder.");
+            return;
         }
 
-        const currentScheduledAt =
-            new Date(workout.scheduled_at).getTime();
+        const scheduledTime = new Date(workout.scheduled_at);
+        const now = new Date();
 
-        const jobScheduledAt = new Date(scheduledAt).getTime();
-
-        if (currentScheduledAt !== jobScheduledAt) {
-            console.log(`Skipping stale reminder job ${job.id}`);
-            return { skipped: true, reason: "STALE_SCHEDULE" };
+        if (scheduledTime <= now) {
+            console.log("Workout time has passed. Skipping reminder.");
+            return;
         }
 
-        // Protect against execution before the actual due time.
-        const remainingDelay = currentScheduledAt - Date.now();
+        // Email integration will be added in Topic 3.
+        console.log("====================================");
+        console.log("WORKOUT REMINDER (SIMULATED)");
+        console.log(`To: ${workout.user_email}`);
+        console.log(`User: ${workout.user_name}`);
+        console.log(`Workout: ${workout.name}`);
+        console.log(`Scheduled: ${scheduledTime.toISOString()}`);
+        console.log("====================================");
 
-        if (remainingDelay > 0) {
-            throw new Error(
-                "Reminder was picked up before its scheduled time"
-            );
-        }
-
-        // Replace this with actual email, push, or in-app notification delivery.
-        console.log("Workout reminder due:", {
-            workoutId: workout.id,
-            userId: workout.user_id,
-            workoutName: workout.name,
-            scheduledAt: workout.scheduled_at,
-        });
-
-        return { success: true, workoutId: String(workout.id) };
+        // Returning successfully marks this job as completed.
     },
+
     {
         connection,
-        concurrency: 5,
+        concurrency: 5
     }
 );
 
-workoutWorker.on("completed", (job, result) => {
-    console.log(`Job ${job.id} completed`, result);
+worker.on("completed", (job) => {
+    console.log(`Job ${job.id} completed successfully.`);
 });
 
-workoutWorker.on("failed", (job, error) => {
-    console.error(`Job ${job?.id} failed:`, error.message);
+worker.on("failed", (job, error) => {
+    console.error(
+        `Job ${job?.id} failed: ${error.message}`
+    );
 });
 
-workoutWorker.on("error", (error) => {
-    console.error("BullMQ worker error:", error);
+worker.on("error", (error) => {
+    console.error("Worker error:", error);
 });
 
-export async function closeWorkoutWorker() {
-    await workoutWorker.close();
+async function shutdown() {
+    console.log("Shutting down workout worker...");
+
+    await worker.close();
+    await connection.quit();
     await pool.end();
+
+    process.exit(0);
 }
+
+process.once("SIGINT", shutdown);
+process.once("SIGTERM", shutdown);
+
+console.log("Workout background worker started.");
