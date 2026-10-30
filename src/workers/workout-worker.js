@@ -17,7 +17,7 @@ const worker = new Worker(
 
     async (job) => {
         // We only store IDs in the job.
-        const { workoutId, userId } = job.data;
+        const { workoutId, userId ,reminderId } = job.data;
 
         console.log(`Processing job: ${job.name}`);
         console.log(`Workout ID: ${workoutId}`);

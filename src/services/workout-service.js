@@ -5,9 +5,6 @@ import {
   deleteWorkoutForUser,
   updateWorkoutForUser,
 } from "../repositories/workout-repository.js";
-import {
-  workoutQueue
-} from "../queues/workout-queue.js";
 import { AppError } from "../errors/AppError.js";
 
 //Service: Create Workout
@@ -21,48 +18,6 @@ export async function createWorkout({ userId, name, scheduledAt }) {
     name: name.trim(),
     scheduledAt: scheduledAt ?? null,
   });
-
-  if (workout.scheduled_at) {
-        const scheduledTime = new Date(workout.scheduled_at).getTime();
-
-        // Reminder should run 30 minutes before the workout.
-        const reminderTime = scheduledTime - 30 * 60 * 1000;
-
-        const delay = Math.max(
-            0,
-            reminderTime - Date.now()
-        );
-
-        try {
-            await workoutQueue.add(
-                "send-workout-reminder",
-                {
-                    workoutId: String(workout.id),
-                    userId: String(userId)
-                },
-                {
-                    delay,
-
-                    // Avoid duplicate jobs for this workout.
-                    jobId: `workout-reminder-${workout.id}`
-                }
-            );
-
-            console.log(
-                `Reminder job queued for workout ${workout.id}`
-            );
-        } catch (error) {
-            // The workout is already saved, so do not pretend
-            // the database insert was rolled back.
-            console.error(
-                "Failed to enqueue workout reminder:",
-                error
-            );
-
-            // Production reliability will be improved with
-            // the transactional outbox pattern.
-        }
-    }
 
     return workout;
 
