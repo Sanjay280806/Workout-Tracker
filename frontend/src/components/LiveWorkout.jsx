@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { connectWorkoutSocket } from "../socket/workout-socket";
 
@@ -16,9 +15,8 @@ function LiveWorkout({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Don't create a connection without credentials.
     if (!accessToken || !workoutId) {
-      return;
+      return undefined;
     }
 
     let active = true;
@@ -31,7 +29,6 @@ function LiveWorkout({
 
       setConnected(true);
       setJoined(false);
-      setError("");
 
       socket.emit("workout:join", { workoutId });
     }
@@ -62,6 +59,13 @@ function LiveWorkout({
 
     function handleProgress(data) {
       if (!active || !data) return;
+
+      if (
+        data.workoutId != null &&
+        String(data.workoutId) !== String(workoutId)
+      ) {
+        return;
+      }
 
       const exerciseId =
         data.workoutExerciseId ?? data.exerciseId;
@@ -115,7 +119,12 @@ function LiveWorkout({
     const socket = socketRef.current;
 
     if (!socket?.connected || !joined) {
-      setError("Join the workout before updating progress.");
+      setError("Connect to the workout room first.");
+      return;
+    }
+
+    if (workoutExerciseId == null) {
+      setError("The workout exercise ID is missing.");
       return;
     }
 
@@ -127,7 +136,6 @@ function LiveWorkout({
     });
   }
 
-  // Render a clear message without setting state in an effect.
   if (!accessToken || !workoutId) {
     return (
       <section className="live-workout">
@@ -160,7 +168,7 @@ function LiveWorkout({
         Workout room: {joined ? "Joined" : "Not joined"}
       </p>
 
-      {!joined && connected && (
+      {connected && !joined && (
         <p className="live-help">
           Waiting for the server to confirm the room join...
         </p>
@@ -173,27 +181,22 @@ function LiveWorkout({
       ) : (
         <div className="live-exercise-list">
           {exercises.map((exercise, index) => {
-            const workoutExerciseId =
+            const exerciseId =
               exercise.workoutExerciseId ??
               exercise.id ??
               exercise._id;
 
-            const progressKey =
-              workoutExerciseId == null
-                ? null
-                : String(workoutExerciseId);
+            const key =
+              exerciseId == null ? null : String(exerciseId);
 
-            const progress = progressKey
-              ? progressByExercise[progressKey]
+            const progress = key
+              ? progressByExercise[key]
               : null;
 
             return (
               <div
                 className="live-exercise-row"
-                key={
-                  progressKey ??
-                  `${exercise.name}-${index}`
-                }
+                key={key ?? `${exercise.name}-${index}`}
               >
                 <div className="live-exercise-info">
                   <strong>
@@ -215,12 +218,10 @@ function LiveWorkout({
                   disabled={
                     !connected ||
                     !joined ||
-                    workoutExerciseId == null ||
+                    exerciseId == null ||
                     progress?.completed === true
                   }
-                  onClick={() =>
-                    completeExercise(workoutExerciseId)
-                  }
+                  onClick={() => completeExercise(exerciseId)}
                 >
                   {progress?.completed
                     ? "Completed"
