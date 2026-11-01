@@ -85,3 +85,42 @@ export async function markReminderQueued(reminderId) {
         [reminderId]
     );
 }
+
+// Call this after the email provider accepts the email.
+export async function markReminderSent(reminderId) {
+    await pool.query(
+        `
+        UPDATE workout_reminders
+        SET status = 'sent'
+        WHERE id = $1
+          AND status = 'queued';
+        `,
+        [reminderId]
+    );
+}
+
+// Call this when all BullMQ retry attempts are exhausted.
+export async function markReminderFailed(reminderId) {
+    await pool.query(
+        `
+        UPDATE workout_reminders
+        SET status = 'failed'
+        WHERE id = $1
+          AND status IN ('queued', 'pending');
+        `,
+        [reminderId]
+    );
+}
+
+// Call this when the workout should no longer trigger a reminder.
+export async function markReminderSkipped(reminderId) {
+    await pool.query(
+        `
+        UPDATE workout_reminders
+        SET status = 'skipped'
+        WHERE id = $1
+          AND status IN ('queued', 'pending');
+        `,
+        [reminderId]
+    );
+}
