@@ -104,3 +104,9 @@ function escapeHtml(value) {
         return entities[character];
     });
 }
+
+export async function verifyEmailConnection() {
+  await transporter.verify();
+
+  console.log("SMTP connection verified successfully.");
+}

@@ -13,6 +13,7 @@ import CreateWorkout from "./pages/CreateWorkout";
 import WorkoutList from "./pages/WorkoutList";
 import WorkoutDetails from "./pages/WorkoutDetails";
 import EditWorkout from "./pages/EditWorkout";
+import Files from "./pages/Files";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -94,6 +95,11 @@ function App() {
             <Route
               path="/workouts/:id/edit"
               element={<EditWorkout />}
+            />
+
+            <Route
+              path="/files"
+              element={<Files />}
             />
 
           </Route>

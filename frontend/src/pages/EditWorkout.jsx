@@ -1,6 +1,5 @@
-
 import { useCallback, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 
 import WorkoutForm from "../components/WorkoutForm";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -10,7 +9,6 @@ import {
   getWorkout,
   updateWorkout,
 } from "../services/workoutService";
-
 import { getExercises } from "../services/exerciseService";
 
 import useFetch from "../hooks/useFetch";
@@ -42,9 +40,7 @@ function EditWorkout() {
   } = useFetch(getExercises);
 
   if (workoutLoading || exercisesLoading) {
-    return (
-      <LoadingSpinner message="Loading workout..." />
-    );
+    return <LoadingSpinner message="Loading workout details..." />;
   }
 
   if (workoutError) {
@@ -85,18 +81,21 @@ function EditWorkout() {
   );
 }
 
-
 // ==========================================
-// EDIT FORM
+// EDIT FORM COMPONENT
 // ==========================================
 
 function EditWorkoutForm({ workout, exercises }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const isCompleted = workout.status === "completed";
+
   const {
     workoutName,
     setWorkoutName,
+    scheduledAt,
+    setScheduledAt,
     selectedExercises,
     addExercise,
     removeExercise,
@@ -112,14 +111,17 @@ function EditWorkoutForm({ workout, exercises }) {
     event.preventDefault();
     setError("");
 
+    if (isCompleted) {
+      setError("Completed workouts cannot be modified.");
+      return;
+    }
+
     const validationErrors = validateWorkout({
       workoutName,
       selectedExercises,
     });
 
-    const firstError = Object.values(
-      validationErrors
-    )[0];
+    const firstError = Object.values(validationErrors)[0];
 
     if (firstError) {
       setError(firstError);
@@ -129,31 +131,55 @@ function EditWorkoutForm({ workout, exercises }) {
     try {
       setIsSaving(true);
 
-      await updateWorkout(id, getWorkoutPayload());
+      const payload = getWorkoutPayload();
+      await updateWorkout(id, payload);
+
+      // Persist exercise set details locally
+      if (selectedExercises.length > 0) {
+        localStorage.setItem(
+          `workout_${id}_exercises`,
+          JSON.stringify(selectedExercises)
+        );
+      }
 
       navigate(`/workouts/${id}`);
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        getApiError(
-          error,
-          "Unable to update workout."
-        )
-      );
+    } catch (err) {
+      console.error(err);
+      setError(getApiError(err, "Unable to update workout."));
     } finally {
       setIsSaving(false);
     }
   }
 
+  if (isCompleted) {
+    return (
+      <div className="workout-completed-notice">
+        <Link to={`/workouts/${id}`} className="back-link">
+          ← Back to workout
+        </Link>
+        <div className="alert-banner alert-warning">
+          <h2>Workout Completed</h2>
+          <p>
+            This workout is marked as completed and cannot be modified according to the system rules.
+          </p>
+          <Link to={`/workouts/${id}`} className="primary-button">
+            View Workout Details
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <WorkoutForm
       title="Edit Workout"
-      description="Update your workout and track your sets."
+      description="Update your workout schedule and planned sets."
       backTo={`/workouts/${id}`}
       backLabel="← Back to workout"
       workoutName={workoutName}
       setWorkoutName={setWorkoutName}
+      scheduledAt={scheduledAt}
+      setScheduledAt={setScheduledAt}
       exercises={exercises}
       selectedExercises={selectedExercises}
       addExercise={addExercise}

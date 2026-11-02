@@ -1,13 +1,49 @@
 import { useState } from "react";
 
+function toDateTimeLocalString(isoString) {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+      d.getDate()
+    )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return "";
+  }
+}
+
+function toIsoDatetime(dateTimeLocal) {
+  if (!dateTimeLocal) return null;
+  const d = new Date(dateTimeLocal);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 function useWorkoutForm(initialWorkout = null) {
   const [workoutName, setWorkoutName] = useState(
     initialWorkout?.name || ""
   );
 
-  const [selectedExercises, setSelectedExercises] =
-    useState(initialWorkout?.exercises || []);
+  const initialScheduled =
+    initialWorkout?.scheduled_at ||
+    initialWorkout?.scheduledAt ||
+    "";
 
+  const [scheduledAt, setScheduledAt] = useState(
+    toDateTimeLocalString(initialScheduled)
+  );
+
+  // Load existing exercises if in initialWorkout or localStorage
+  const savedExercises =
+    initialWorkout?.exercises ||
+    (initialWorkout?.id
+      ? JSON.parse(
+          localStorage.getItem(`workout_${initialWorkout.id}_exercises`) || "[]"
+        )
+      : []);
+
+  const [selectedExercises, setSelectedExercises] = useState(savedExercises);
 
   // ==========================================
   // ADD EXERCISE
@@ -24,22 +60,18 @@ function useWorkoutForm(initialWorkout = null) {
 
     const exerciseWithSet = {
       ...exercise,
-
+      workoutExerciseId: exercise.id,
       sets: [
         {
           id: 1,
-          weight: "",
-          reps: "",
+          weight: "20",
+          reps: "10",
         },
       ],
     };
 
-    setSelectedExercises((current) => [
-      ...current,
-      exerciseWithSet,
-    ]);
+    setSelectedExercises((current) => [...current, exerciseWithSet]);
   }
-
 
   // ==========================================
   // REMOVE EXERCISE
@@ -47,12 +79,9 @@ function useWorkoutForm(initialWorkout = null) {
 
   function removeExercise(exerciseId) {
     setSelectedExercises((current) =>
-      current.filter(
-        (exercise) => exercise.id !== exerciseId
-      )
+      current.filter((exercise) => exercise.id !== exerciseId)
     );
   }
-
 
   // ==========================================
   // ADD SET
@@ -73,26 +102,17 @@ function useWorkoutForm(initialWorkout = null) {
 
         return {
           ...exercise,
-          sets: [
-            ...exercise.sets,
-            newSet,
-          ],
+          sets: [...exercise.sets, newSet],
         };
       })
     );
   }
 
-
   // ==========================================
   // UPDATE SET
   // ==========================================
 
-  function updateSet(
-    exerciseId,
-    setId,
-    field,
-    value
-  ) {
+  function updateSet(exerciseId, setId, field, value) {
     setSelectedExercises((current) =>
       current.map((exercise) => {
         if (exercise.id !== exerciseId) {
@@ -101,7 +121,6 @@ function useWorkoutForm(initialWorkout = null) {
 
         return {
           ...exercise,
-
           sets: exercise.sets.map((set) => {
             if (set.id !== setId) {
               return set;
@@ -117,7 +136,6 @@ function useWorkoutForm(initialWorkout = null) {
     );
   }
 
-
   // ==========================================
   // BUILD API PAYLOAD
   // ==========================================
@@ -125,32 +143,20 @@ function useWorkoutForm(initialWorkout = null) {
   function getWorkoutPayload() {
     return {
       name: workoutName.trim(),
-
-      exercises: selectedExercises.map(
-        (exercise) => ({
-          exerciseId: exercise.id,
-
-          sets: exercise.sets.map((set) => ({
-            weight: Number(set.weight),
-            reps: Number(set.reps),
-          })),
-        })
-      ),
+      scheduledAt: toIsoDatetime(scheduledAt),
     };
   }
-
 
   return {
     workoutName,
     setWorkoutName,
-
+    scheduledAt,
+    setScheduledAt,
     selectedExercises,
-
     addExercise,
     removeExercise,
     addSet,
     updateSet,
-
     getWorkoutPayload,
   };
 }

@@ -1,35 +1,22 @@
 import api from "./api";
 
-
 // ==========================================
 // CREATE
 // ==========================================
 
-export async function createWorkout(
-  workoutData
-) {
-  const response = await api.post(
-    "/workouts",
-    workoutData
-  );
-
+export async function createWorkout(workoutData) {
+  const response = await api.post("/workouts", workoutData);
   return response.data;
 }
-
 
 // ==========================================
 // GET ALL
 // ==========================================
 
-export async function getWorkouts(
-  signal
-) {
-  const response = await api.get(
-    "/workouts",
-    {
-      signal,
-    }
-  );
+export async function getWorkouts(signal) {
+  const response = await api.get("/workouts", {
+    signal,
+  });
 
   const data = response.data;
 
@@ -48,21 +35,14 @@ export async function getWorkouts(
   return [];
 }
 
-
 // ==========================================
 // GET ONE
 // ==========================================
 
-export async function getWorkout(
-  id,
-  signal
-) {
-  const response = await api.get(
-    `/workouts/${id}`,
-    {
-      signal,
-    }
-  );
+export async function getWorkout(id, signal) {
+  const response = await api.get(`/workouts/${id}`, {
+    signal,
+  });
 
   const data = response.data;
 
@@ -77,34 +57,20 @@ export async function getWorkout(
   return data;
 }
 
-
 // ==========================================
-// UPDATE
+// UPDATE (Backend uses PATCH)
 // ==========================================
 
-export async function updateWorkout(
-  id,
-  workoutData
-) {
-  const response = await api.put(
-    `/workouts/${id}`,
-    workoutData
-  );
-
+export async function updateWorkout(id, workoutData) {
+  const response = await api.patch(`/workouts/${id}`, workoutData);
   return response.data;
 }
-
 
 // ==========================================
 // DELETE
 // ==========================================
 
-export async function deleteWorkout(
-  id
-) {
-  const response = await api.delete(
-    `/workouts/${id}`
-  );
-
+export async function deleteWorkout(id) {
+  const response = await api.delete(`/workouts/${id}`);
   return response.data;
 }

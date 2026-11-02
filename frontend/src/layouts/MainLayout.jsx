@@ -1,8 +1,8 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
 function MainLayout() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -10,37 +10,89 @@ function MainLayout() {
     navigate("/login");
   }
 
+  const displayName = user?.user?.name || user?.name;
+
   return (
     <div className="app">
       <header className="navbar">
-        <Link className="navbar-brand" to="/">
-          Workout Tracker
-        </Link>
+        <div className="navbar-brand-group">
+          <Link className="navbar-brand" to={isAuthenticated ? "/dashboard" : "/"}>
+            ⚡ Workout Tracker
+          </Link>
+        </div>
 
         <nav className="navbar-links">
-          <Link to="/">Home</Link>
+          <NavLink
+            to="/"
+            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+            end
+          >
+            Home
+          </NavLink>
 
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard">Dashboard</Link>
-              <Link to="/workouts">Workouts</Link>
-              <Link to="/exercises">Exercises</Link>
-              <Link to="/workouts/create">
-                Create Workout
-              </Link>
-
-              <button
-                className="navbar-button"
-                onClick={handleLogout}
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
               >
-                Logout
-              </button>
+                Dashboard
+              </NavLink>
+
+              <NavLink
+                to="/workouts"
+                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                end
+              >
+                Workouts
+              </NavLink>
+
+              <NavLink
+                to="/exercises"
+                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+              >
+                Exercises
+              </NavLink>
+
+              <NavLink
+                to="/files"
+                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+              >
+                Photos & Files
+              </NavLink>
+
+              <NavLink
+                to="/workouts/create"
+                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+              >
+                + Create
+              </NavLink>
+
+              <div className="navbar-user-section">
+                {displayName && (
+                  <span className="navbar-user-greeting">
+                    👤 {displayName}
+                  </span>
+                )}
+
+                <button
+                  className="navbar-button"
+                  onClick={handleLogout}
+                  title="Sign out of account"
+                >
+                  Logout
+                </button>
+              </div>
             </>
           ) : (
-            <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
-            </>
+            <div className="navbar-auth-links">
+              <Link to="/login" className="nav-link">
+                Login
+              </Link>
+              <Link to="/register" className="primary-button-sm">
+                Get Started
+              </Link>
+            </div>
           )}
         </nav>
       </header>
@@ -48,6 +100,12 @@ function MainLayout() {
       <main className="main-content">
         <Outlet />
       </main>
+
+      <footer className="footer">
+        <p>
+          Workout Tracker &bull; Powered by Express, PostgreSQL, Redis BullMQ, AWS S3 &amp; Socket.IO
+        </p>
+      </footer>
     </div>
   );
 }
