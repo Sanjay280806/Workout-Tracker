@@ -21,3 +21,23 @@ export async function getExercises(signal) {
 
   return [];
 }
+
+export async function getExercise(id, signal) {
+  const response = await api.get(`/exercises/${id}`, { signal });
+  return response.data;
+}
+
+export async function createExercise(exerciseData) {
+  const response = await api.post("/exercises", exerciseData);
+  return response.data;
+}
+
+export async function updateExercise(id, exerciseData) {
+  const response = await api.patch(`/exercises/${id}`, exerciseData);
+  return response.data;
+}
+
+export async function deleteExercise(id) {
+  const response = await api.delete(`/exercises/${id}`);
+  return response.data;
+}

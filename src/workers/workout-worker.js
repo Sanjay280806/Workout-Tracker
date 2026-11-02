@@ -1,9 +1,18 @@
 import "dotenv/config";
-
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
 
 import pool from "../db/pool.js";
+
+import {
+    markReminderSent,
+    markReminderFailed,
+    markReminderSkipped
+} from "../repositories/reminder-repository.js";
+
+import {
+    sendWorkoutReminderEmail
+} from "../services/email-service.js";
 
 const connection = new IORedis(
     process.env.REDIS_URL || "redis://localhost:6379",
@@ -16,23 +25,33 @@ const worker = new Worker(
     "workout-jobs",
 
     async (job) => {
-        // We only store IDs in the job.
-        const { workoutId, userId ,reminderId } = job.data;
+        // Ignore other job types if this queue is used for more than reminders.
+        if (job.name !== "send-workout-reminder") {
+            console.log(`Skipping unsupported job type: ${job.name}`);
+            return;
+        }
 
-        console.log(`Processing job: ${job.name}`);
-        console.log(`Workout ID: ${workoutId}`);
+        const { workoutId, userId, reminderId } = job.data;
 
-        // Always retrieve the latest data from PostgreSQL.
+        if (!workoutId || !userId || !reminderId) {
+            throw new Error(
+                "Reminder job is missing workoutId, userId, or reminderId."
+            );
+        }
+
+        console.log(`Processing reminder ${reminderId}`);
+
+        // Fetch the workout and the user who owns it.
         const result = await pool.query(
             `
             SELECT
                 w.id,
-                w.name,
+                w.user_id,
+                w.name AS workout_name,
                 w.scheduled_at,
-                w.status,
-                u.id AS user_id,
-                u.name AS user_name,
-                u.email AS user_email
+                w.status AS workout_status,
+                u.email,
+                u.name AS user_name
             FROM workouts AS w
             JOIN users AS u
                 ON u.id = w.user_id
@@ -44,42 +63,51 @@ const worker = new Worker(
 
         const workout = result.rows[0];
 
+        // The workout might have been deleted or the user/workout
+        // relationship may no longer be valid.
         if (!workout) {
-            console.log("Workout no longer exists. Skipping job.");
+            await markReminderSkipped(reminderId);
+            console.log(`Reminder ${reminderId} skipped: workout not found.`);
             return;
         }
 
-        // Do not remind users about cancelled or completed workouts.
-        if (!["pending", "active"].includes(workout.status)) {
+        // Do not send reminders for cancelled or completed workouts.
+        if (!["pending", "active"].includes(workout.workout_status)) {
+            await markReminderSkipped(reminderId);
             console.log(
-                `Workout status is ${workout.status}. Skipping reminder.`
+                `Reminder ${reminderId} skipped: workout status is ${workout.workout_status}.`
             );
             return;
         }
 
-        if (!workout.scheduled_at) {
-            console.log("Workout has no scheduled time. Skipping reminder.");
+        // Do not send a reminder for a workout that has already started.
+        if (new Date(workout.scheduled_at).getTime() <= Date.now()) {
+            await markReminderSkipped(reminderId);
+            console.log(`Reminder ${reminderId} skipped: workout time has passed.`);
             return;
         }
 
-        const scheduledTime = new Date(workout.scheduled_at);
-        const now = new Date();
-
-        if (scheduledTime <= now) {
-            console.log("Workout time has passed. Skipping reminder.");
-            return;
+        if (!workout.email) {
+            throw new Error("The workout owner does not have an email address.");
         }
 
-        // Email integration will be added in Topic 3.
-        console.log("====================================");
-        console.log("WORKOUT REMINDER (SIMULATED)");
-        console.log(`To: ${workout.user_email}`);
-        console.log(`User: ${workout.user_name}`);
-        console.log(`Workout: ${workout.name}`);
-        console.log(`Scheduled: ${scheduledTime.toISOString()}`);
-        console.log("====================================");
+        // Send the email. If this throws, BullMQ can retry the job.
+        await sendWorkoutReminderEmail({
+            to: workout.email,
+            userName: workout.user_name,
+            workoutName: workout.workout_name,
+            scheduledAt: workout.scheduled_at
+        });
 
-        // Returning successfully marks this job as completed.
+        // Only mark sent after the email provider accepts the message.
+        await markReminderSent(reminderId);
+
+        console.log(`Reminder ${reminderId} marked as sent.`);
+
+        return {
+            reminderId,
+            status: "sent"
+        };
     },
 
     {
@@ -88,31 +116,66 @@ const worker = new Worker(
     }
 );
 
+// Fires when a job completes successfully.
 worker.on("completed", (job) => {
     console.log(`Job ${job.id} completed successfully.`);
 });
 
-worker.on("failed", (job, error) => {
+// Fires for failures, including failures that will be retried.
+worker.on("failed", async (job, error) => {
     console.error(
-        `Job ${job?.id} failed: ${error.message}`
+        `Job ${job?.id} failed on attempt ${job?.attemptsMade}:`,
+        error.message
     );
+
+    if (!job) return;
+
+    const maxAttempts = job.opts.attempts ?? 1;
+    const isFinalAttempt = job.attemptsMade >= maxAttempts;
+
+    // Do not mark the reminder failed while BullMQ can still retry it.
+    if (
+        isFinalAttempt &&
+        job.name === "send-workout-reminder" &&
+        job.data?.reminderId
+    ) {
+        try {
+            await markReminderFailed(job.data.reminderId);
+
+            console.error(
+                `Reminder ${job.data.reminderId} marked as failed after all retries.`
+            );
+        } catch (dbError) {
+            console.error(
+                "Could not update failed reminder status:",
+                dbError.message
+            );
+        }
+    }
 });
 
 worker.on("error", (error) => {
-    console.error("Worker error:", error);
+    console.error("Workout worker error:", error.message);
 });
 
+// Shut down cleanly.
 async function shutdown() {
     console.log("Shutting down workout worker...");
 
-    await worker.close();
-    await connection.quit();
-    await pool.end();
+    try {
+        await worker.close();
+        await connection.quit();
+        await pool.end();
 
-    process.exit(0);
+        console.log("Workout worker stopped.");
+        process.exit(0);
+    } catch (error) {
+        console.error("Error during worker shutdown:", error);
+        process.exit(1);
+    }
 }
 
 process.once("SIGINT", shutdown);
 process.once("SIGTERM", shutdown);
 
-console.log("Workout background worker started.");
+console.log("Workout email reminder worker started.");

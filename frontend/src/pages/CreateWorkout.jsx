@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -28,6 +27,8 @@ function CreateWorkout() {
   const {
     workoutName,
     setWorkoutName,
+    scheduledAt,
+    setScheduledAt,
     selectedExercises,
     addExercise,
     removeExercise,
@@ -48,9 +49,7 @@ function CreateWorkout() {
       selectedExercises,
     });
 
-    const firstError = Object.values(
-      validationErrors
-    )[0];
+    const firstError = Object.values(validationErrors)[0];
 
     if (firstError) {
       setError(firstError);
@@ -60,27 +59,28 @@ function CreateWorkout() {
     try {
       setIsSaving(true);
 
-      await createWorkout(getWorkoutPayload());
+      const payload = getWorkoutPayload();
+      const created = await createWorkout(payload);
+
+      // Persist planned exercises locally for live tracking
+      if (created?.id && selectedExercises.length > 0) {
+        localStorage.setItem(
+          `workout_${created.id}_exercises`,
+          JSON.stringify(selectedExercises)
+        );
+      }
 
       navigate("/workouts");
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        getApiError(
-          error,
-          "Unable to create workout."
-        )
-      );
+    } catch (err) {
+      console.error(err);
+      setError(getApiError(err, "Unable to create workout."));
     } finally {
       setIsSaving(false);
     }
   }
 
   if (isLoading) {
-    return (
-      <LoadingSpinner message="Loading exercises..." />
-    );
+    return <LoadingSpinner message="Loading exercises..." />;
   }
 
   if (exercisesError) {
@@ -95,10 +95,12 @@ function CreateWorkout() {
 
   return (
     <WorkoutForm
-      title="Create Workout"
-      description="Build your workout and track your sets."
+      title="Create New Workout"
+      description="Plan your workout, schedule a reminder, and configure your sets."
       workoutName={workoutName}
       setWorkoutName={setWorkoutName}
+      scheduledAt={scheduledAt}
+      setScheduledAt={setScheduledAt}
       exercises={exercises || []}
       selectedExercises={selectedExercises}
       addExercise={addExercise}
@@ -108,7 +110,9 @@ function CreateWorkout() {
       onSubmit={handleSubmit}
       isSaving={isSaving}
       error={error}
-      submitLabel="Save Workout"
+      submitLabel="Create Workout"
+      backTo="/workouts"
+      backLabel="← Back to Workouts"
     />
   );
 }
