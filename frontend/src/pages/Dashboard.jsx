@@ -5,7 +5,6 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/useAuth";
 import { getWorkouts } from "../services/workoutService";
 import { getExercises } from "../services/exerciseService";
-import { checkHealth } from "../services/healthService";
 
 function formatDateTime(value) {
   if (!value) return null;
@@ -27,7 +26,6 @@ function Dashboard() {
 
   const [workouts, setWorkouts] = useState([]);
   const [exerciseCount, setExerciseCount] = useState(0);
-  const [apiHealth, setApiHealth] = useState({ status: "Checking...", ok: false });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -35,10 +33,9 @@ function Dashboard() {
 
     async function loadDashboardData() {
       try {
-        const [workoutsRes, exercisesRes, healthRes] = await Promise.allSettled([
+        const [workoutsRes, exercisesRes] = await Promise.allSettled([
           getWorkouts(),
           getExercises(),
-          checkHealth(),
         ]);
 
         if (!active) return;
@@ -50,12 +47,6 @@ function Dashboard() {
         if (exercisesRes.status === "fulfilled") {
           const exList = Array.isArray(exercisesRes.value) ? exercisesRes.value : [];
           setExerciseCount(exList.length);
-        }
-
-        if (healthRes.status === "fulfilled" && healthRes.value?.status === "OK") {
-          setApiHealth({ status: "Healthy (OK)", ok: true });
-        } else {
-          setApiHealth({ status: "Unavailable", ok: false });
         }
       } catch (err) {
         console.error("Dashboard data fetch error:", err);
@@ -92,22 +83,6 @@ function Dashboard() {
           <Link to="/workouts/create" className="primary-button">
             + Schedule Workout
           </Link>
-        </div>
-      </section>
-
-      {/* Backend Health & Features Banner */}
-      <section className="system-health-strip">
-        <div className="health-indicator">
-          <span className={`status-dot ${apiHealth.ok ? "dot-online" : "dot-offline"}`}></span>
-          <span>
-            API Backend: <strong>{apiHealth.status}</strong>
-          </span>
-        </div>
-
-        <div className="features-pill-row">
-          <span className="feature-pill">⚡ Real-time Socket.IO Active</span>
-          <span className="feature-pill">⏰ 30-min Auto Reminders</span>
-          <span className="feature-pill">☁️ S3 Cloud Storage Ready</span>
         </div>
       </section>
 
